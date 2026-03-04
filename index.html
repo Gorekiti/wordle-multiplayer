@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle Duo Online</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div id="auth-screen">
+        <div class="auth-box">
+            <h1>Wordle Duo</h1>
+            <input type="text" id="nickname-input" placeholder="Ваш ник..." maxlength="12">
+            <button onclick="joinGame()">Войти</button>
+        </div>
+    </div>
+
+    <div class="main-layout hidden" id="main-ui">
+        <aside class="sidebar">
+            <h3>🏆 Лидеры</h3>
+            <ul id="leaderboard"></ul>
+        </aside>
+
+        <main class="game-area">
+            <h2 id="status-msg">Ожидание игроков...</h2>
+            
+            <div id="setup-zone" class="hidden">
+                <input type="text" id="secret-word" maxlength="10" placeholder="Загадай слово">
+                <button onclick="sendSecret()">OK</button>
+            </div>
+
+            <div id="grid-zone" class="hidden">
+                <div id="grid"></div>
+                <div class="input-controls">
+                    <input type="text" id="guess-input" maxlength="10">
+                    <button onclick="sendGuess()">Угадать</button>
+                </div>
+            </div>
+        </main>
+
+        <aside class="sidebar">
+            <h3>👥 В сети</h3>
+            <ul id="player-list"></ul>
+        </aside>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
