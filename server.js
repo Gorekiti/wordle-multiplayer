@@ -2,6 +2,9 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
 const app = express();
 const server = http.createServer(app);
@@ -9,78 +12,84 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-let players = {}; 
-let gameState = {
-    word: "",
-    setter: null,
-    guesser: null,
-    status: "waiting" // waiting, setting, playing
-};
-
 io.on('connection', (socket) => {
-    socket.on('registerPlayer', (nickname) => {
-        players[socket.id] = { id: socket.id, name: nickname, score: 0 };
-        io.emit('updatePlayers', players);
+    
+    socket.on('joinRoom', async ({ roomId, nickname }) => {
+        socket.join(roomId);
         
-        if (Object.keys(players).length >= 2 && gameState.status === "waiting") {
-            startNewRound();
+        // Регистрируем игрока
+        await supabase.from('players').upsert({ nickname });
+        
+        // Проверяем/создаем комнату в базе
+        let { data: room } = await supabase.from('game_rooms').select('*').eq('room_id', roomId).single();
+        if (!room) {
+            const { data: newRoom } = await supabase.from('game_rooms').insert([
+                { room_id: roomId, status: 'waiting', attempts_history: [] }
+            ]).select().single();
+            room = newRoom;
+        }
+
+        // Получаем список игроков в этой конкретной комнате
+        const clients = io.sockets.adapter.rooms.get(roomId);
+        const numClients = clients ? clients.size : 0;
+
+        // Рассылаем инфо о комнате
+        io.to(roomId).emit('roomUpdate', {
+            playersCount: numClients,
+            session: room
+        });
+
+        // Если в комнате двое и она пуста — стартуем
+        if (numClients === 2 && room.status === 'waiting') {
+            startRoomRound(roomId);
         }
     });
 
-    socket.on('setWord', (word) => {
-        if (socket.id === gameState.setter && word.length >= 2) {
-            gameState.word = word.toUpperCase();
-            gameState.status = "playing";
-            io.emit('wordReady', { length: word.length, guesser: gameState.guesser });
-        }
+    socket.on('setWord', async ({ roomId, word, nickname }) => {
+        const wordUpper = word.toUpperCase();
+        await supabase.from('game_rooms').update({
+            secret_word: wordUpper,
+            status: 'playing',
+            attempts_history: []
+        }).eq('room_id', roomId);
+
+        io.to(roomId).emit('wordReady', { length: wordUpper.length, setter: nickname });
     });
 
-    socket.on('makeGuess', (guess) => {
-        if (socket.id === gameState.guesser) {
-            const secret = gameState.word;
-            const guessUpper = guess.toUpperCase();
+    socket.on('makeGuess', async ({ roomId, guess, nickname }) => {
+        const { data: room } = await supabase.from('game_rooms').select('*').eq('room_id', roomId).single();
+        if (nickname !== room.guesser_nick) return;
+
+        const result = guess.split('').map((char, i) => {
+            if (char === room.secret_word[i]) return 'correct';
+            if (room.secret_word.includes(char)) return 'present';
+            return 'absent';
+        });
+
+        const newHistory = [...room.attempts_history, { guess, result }];
+        await supabase.from('game_rooms').update({ attempts_history: newHistory }).eq('room_id', roomId);
+
+        io.to(roomId).emit('guessResult', { result, guess });
+
+        if (guess === room.secret_word) {
+            // Обновляем счет в таблице игроков
+            const { data: p } = await supabase.from('players').select('score').eq('nickname', nickname).single();
+            await supabase.from('players').update({ score: (p?.score || 0) + 1 }).eq('nickname', nickname);
             
-            // Логика проверки букв
-            let result = guessUpper.split('').map((char, i) => {
-                if (char === secret[i]) return 'correct';
-                if (secret.includes(char)) return 'present';
-                return 'absent';
-            });
-
-            socket.emit('guessResult', { result, guess: guessUpper });
-
-            if (guessUpper === secret) {
-                players[socket.id].score += 1;
-                io.emit('gameOver', { winner: players[socket.id].name, word: secret });
-                setTimeout(startNewRound, 3000);
-            }
+            io.to(roomId).emit('gameOver', { winner: nickname, word: room.secret_word });
+            setTimeout(() => startRoomRound(roomId), 4000);
         }
     });
-
-    socket.on('disconnect', () => {
-        delete players[socket.id];
-        if (Object.keys(players).length < 2) {
-            gameState = { word: "", setter: null, guesser: null, status: "waiting" };
-        }
-        io.emit('updatePlayers', players);
-        io.emit('resetUI');
-    });
-
-    function startNewRound() {
-        const ids = Object.keys(players);
-        // Меняем ролями: первый загадывает, второй угадывает (или наоборот)
-        if (!gameState.setter || gameState.setter === ids[0]) {
-            gameState.setter = ids[1] || ids[0];
-            gameState.guesser = ids[0];
-        } else {
-            gameState.setter = ids[0];
-            gameState.guesser = ids[1];
-        }
-        gameState.status = "setting";
-        gameState.word = "";
-        io.emit('gameStart', { setter: gameState.setter, guesser: gameState.guesser, players });
-    }
 });
 
+async function startRoomRound(roomId) {
+    // Логика выбора кто загадывает (простая ротация)
+    const { data: room } = await supabase.from('game_rooms').select('*').eq('room_id', roomId).single();
+    
+    // В реальности тут нужно брать ники активных сокетов, но для простоты:
+    // Мы просто сбросим статус, чтобы игроки нажали "Готов" или назначим их
+    // Для полноценной комнаты лучше передавать ники при joinRoom
+}
+
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server live on ${PORT}`));

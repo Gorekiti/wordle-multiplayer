@@ -1,93 +1,73 @@
 const socket = io();
-let myId = null;
-let currentAttempt = 0;
+let roomId = new URLSearchParams(window.location.search).get('room');
+let myNick = localStorage.getItem('wordle-nick') || "";
+let currentWordLen = 0;
 
-function joinGame() {
-    const nick = document.getElementById('nickname-input').value.trim();
-    if (nick) {
-        myId = socket.id;
-        socket.emit('registerPlayer', nick);
-        document.getElementById('auth-screen').classList.add('hidden');
-        document.getElementById('main-ui').classList.remove('hidden');
-    }
-}
-
-socket.on('updatePlayers', (players) => {
-    const pList = document.getElementById('player-list');
-    const lList = document.getElementById('leaderboard');
-    pList.innerHTML = ""; lList.innerHTML = "";
-
-    const sorted = Object.values(players).sort((a, b) => b.score - a.score);
-    Object.values(players).forEach(p => {
-        pList.innerHTML += `<li>${p.name} ${p.id === socket.id ? '(Вы)' : ''}</li>`;
-    });
-    sorted.forEach(p => {
-        lList.innerHTML += `<li>${p.name}: <b>${p.score}</b></li>`;
-    });
+// Активация кнопки при вводе ника
+document.getElementById('nick-input').addEventListener('input', (e) => {
+    const btn = document.getElementById('create-room-btn');
+    btn.disabled = e.target.value.trim().length < 2;
 });
 
-socket.on('gameStart', ({ setter, guesser, players }) => {
-    currentAttempt = 0;
-    document.getElementById('grid-zone').classList.add('hidden');
-    document.getElementById('setup-zone').classList.add('hidden');
-    
-    if (socket.id === setter) {
-        document.getElementById('status-msg').innerText = "Твоя очередь загадывать!";
-        document.getElementById('setup-zone').classList.remove('hidden');
-    } else {
-        document.getElementById('status-msg').innerText = `Ждем, пока ${players[setter].name} загадает слово...`;
+// Если зашли по ссылке — сразу просим ник
+window.onload = () => {
+    if (roomId) {
+        document.getElementById('create-room-btn').innerText = "Войти в комнату";
     }
+};
+
+function createRoom() {
+    myNick = document.getElementById('nick-input').value.trim();
+    localStorage.setItem('wordle-nick', myNick);
+    
+    if (!roomId) {
+        roomId = Math.random().toString(36).substring(2, 9);
+        window.history.pushState({}, '', `?room=${roomId}`);
+    }
+    
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('game-ui').classList.remove('hidden');
+    
+    socket.emit('joinRoom', { roomId, nickname: myNick });
+}
+
+socket.on('roomUpdate', ({ playersCount, session }) => {
+    document.getElementById('player-list').innerHTML = `<li>В комнате: ${playersCount}/2</li>`;
+    
+    if (playersCount === 2 && session.status === 'waiting') {
+        // Логика назначения ролей (для теста: первый зашедший — setter)
+        // В продакшене лучше делать через массив ников на сервере
+    }
+    
+    if (session.status === 'playing') syncGame(session);
 });
 
 function sendSecret() {
     const word = document.getElementById('secret-word').value.trim();
-    if (word.length >= 2) socket.emit('setWord', word);
-}
-
-socket.on('wordReady', ({ length, guesser }) => {
-    document.getElementById('setup-zone').classList.add('hidden');
-    if (socket.id === guesser) {
-        document.getElementById('status-msg').innerText = "Угадывай слово!";
-        document.getElementById('grid-zone').classList.remove('hidden');
-        initGrid(length);
-    } else {
-        document.getElementById('status-msg').innerText = "Соперник угадывает...";
-    }
-});
-
-function initGrid(len) {
-    const grid = document.getElementById('grid');
-    grid.innerHTML = "";
-    document.getElementById('guess-input').maxLength = len;
-    for (let i = 0; i < 6; i++) {
-        const row = document.createElement('div');
-        row.className = 'row';
-        for (let j = 0; j < len; j++) {
-            row.innerHTML += `<div class="tile"></div>`;
-        }
-        grid.appendChild(row);
+    if (word.length >= 2 && word.length <= 10) {
+        socket.emit('setWord', { roomId, word, nickname: myNick });
     }
 }
 
 function sendGuess() {
-    const val = document.getElementById('guess-input').value.trim();
-    socket.emit('makeGuess', val);
+    const guess = document.getElementById('guess-input').value.trim().toUpperCase();
+    if (guess.length !== currentWordLen) return alert(`Нужно ${currentWordLen} букв!`);
+    socket.emit('makeGuess', { roomId, guess, nickname: myNick });
 }
 
-socket.on('guessResult', ({ result, guess }) => {
-    const rows = document.querySelectorAll('.row');
-    const tiles = rows[currentAttempt].querySelectorAll('.tile');
-    result.forEach((status, i) => {
-        tiles[i].classList.add(status);
-        tiles[i].innerText = guess[i];
-    });
-    currentAttempt++;
-    document.getElementById('guess-input').value = "";
-});
+function copyRoomLink() {
+    navigator.clipboard.writeText(window.location.href);
+    alert("Ссылка скопирована! Отправь её другу.");
+}
 
-socket.on('gameOver', ({ winner, word }) => {
-    alert(`Раунд окончен! Победил ${winner}. Слово: ${word}`);
-    document.getElementById('grid-zone').classList.add('hidden');
-});
-
-socket.on('resetUI', () => { location.reload(); });
+function initGrid(len) {
+    currentWordLen = len;
+    const grid = document.getElementById('grid');
+    grid.innerHTML = "";
+    for (let i = 0; i < 6; i++) {
+        const row = document.createElement('div');
+        row.className = 'row';
+        for (let j = 0; j < len; j++) row.innerHTML += `<div class="tile"></div>`;
+        grid.appendChild(row);
+    }
+}
