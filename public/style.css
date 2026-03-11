@@ -82,18 +82,33 @@ body {
     border-left: 1px solid var(--border);
 }
 
-.game-core{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    position:relative;
+.game-core {
+    display: flex;
+    flex-direction: column; /* <-- ВОТ ЭТА СТРОЧКА ВСЁ ИСПРАВИТ */
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 100%; /* Добавим для надежного центрирования */
 }
 
 .game-box {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 40px; /* Добавили место под текст "Ожидание..." */
+    margin-top: 0; /* Уберем огромный отступ, если он там остался */
+    width: 100%;
+}
+
+#status-msg {
+    position: relative; 
+    top: 0;
+    left: 0;
+    transform: none;
+    margin-bottom: 20px; /* Отступ вниз до холста с инструментами */
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    width: 100%;
 }
 
 /* === ЛОББИ === */
@@ -176,18 +191,6 @@ button:hover { filter: brightness(1.2); }
     font-family: monospace; /* Для «цифрового» вида */
     z-index: 10;
     border: none; /* Убираем бордер, если был */
-}
-
-#status-msg {
-    position: relative; /* Убрали absolute, теперь текст не будет выпадать */
-    top: 0;
-    left: 0;
-    transform: none;
-    margin-bottom: 15px; /* Добавляем отступ вниз до холста */
-    font-size: 1.5rem;
-    font-weight: bold;
-    text-align: center;
-    width: 100%;
 }
 
 /* === ХОЛСТ: ФИКС ВЫСОТЫ И ИНСТРУМЕНТЫ СВЕРХУ === */
