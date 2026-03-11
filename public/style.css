@@ -3,13 +3,11 @@
     --panel: #161618; 
     --accent: #538d4e; 
     --border: #2d2d30; 
+    --canvas-panel: #1e1e20; /* Тёмный цвет панели из скриншота */
 }
 
 /* === ГАРМОНИЧНЫЙ СКРОЛЛБАР === */
-* { 
-    scrollbar-width: thin; 
-    scrollbar-color: var(--border) transparent; 
-}
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
@@ -20,32 +18,14 @@ body {
     color: white; 
     font-family: 'Inter', sans-serif; 
     margin: 0; 
-    overflow: hidden; /* Гарантирует отсутствие общего скролла */
+    overflow: hidden; /* Убираем общий скролл страницы */
     height: 100vh;
     width: 100vw;
 }
 
 .hidden { display: none !important; }
 
-/* === ОСНОВНЫЕ ЭКРАНЫ === */
-.screen { 
-    height: 100vh; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-}
-
-.box { 
-    background: var(--panel); 
-    padding: 40px; 
-    border-radius: 20px; 
-    text-align: center; 
-    border: 1px solid var(--border); 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-}
-
-.logo-text span { color: var(--accent); }
-
+/* === СЕТКА ПРИЛОЖЕНИЯ === */
 .app-container { 
     display: grid; 
     grid-template-columns: 220px 1fr 280px; 
@@ -68,7 +48,7 @@ body {
     display: flex; 
     flex-direction: column; 
     align-items: center; 
-    justify-content: center; /* Центрируем холст по вертикали */
+    justify-content: center; /* Центрируем игру по вертикали */
     padding: 10px 15px; 
     position: relative; 
     height: 100%;
@@ -146,7 +126,7 @@ button {
     border-radius: 8px; 
     cursor: pointer; 
     font-weight: bold; 
-    transition: filter 0.2s; 
+    transition: 0.2s; 
 }
 
 button:hover { filter: brightness(1.2); }
@@ -155,25 +135,25 @@ button:hover { filter: brightness(1.2); }
     font-size: 1rem; 
     color: var(--accent); 
     background: rgba(83,141,78,0.1); 
-    padding: 4px 15px; 
+    padding: 4px 18px; 
     border-radius: 40px; 
-    margin-bottom: 8px; 
+    margin-bottom: 10px; 
     font-weight: bold; 
     border: 1px solid rgba(83,141,78,0.3); 
 }
 
-#status-msg { margin-bottom: 8px; font-size: 1rem; text-align: center; min-height: 1.2rem; }
+#status-msg { margin-bottom: 10px; font-size: 1.1rem; text-align: center; font-weight: 500; }
 
-/* === ХОЛСТ: ФИКС ВЫСОТЫ И ИНСТРУМЕНТЫ СВЕРХУ === */
+/* === ХОЛСТ 1 В 1 ПО СКРИНШОТУ === */
 .canvas-wrapper { 
     position: relative; 
-    background: #1e1e20; /* Темный фон панели из фото */
-    border-radius: 15px; 
-    box-shadow: 0 10px 40px rgba(0,0,0,0.6); 
+    background: var(--canvas-panel); 
+    border-radius: 20px; /* Сильное скругление углов */
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
     display: flex; 
     flex-direction: column; 
     overflow: hidden; 
-    max-height: 75vh; /* Чуть увеличим, чтобы холст был крупнее */
+    max-height: 72vh; /* Ограничиваем высоту, чтобы не было скролла */
     width: auto;
     aspect-ratio: 3/2;
 }
@@ -182,70 +162,72 @@ canvas {
     touch-action: none; 
     display: block; 
     width: 100%; 
-    height: 100%;
+    height: 100%; 
+    background: white; /* Лист для рисования */
 }
 
+/* ПАНЕЛЬ ИНСТРУМЕНТОВ (ВЕРХНЯЯ) */
 .toolbar { 
-    background: #1e1e20; 
-    padding: 12px 20px; 
+    background: var(--canvas-panel); 
+    padding: 15px 25px; 
     display: flex; 
-    gap: 20px; 
     align-items: center; 
     justify-content: space-between; 
-    border-bottom: none; /* Убираем разделительную линию */
+    gap: 20px; 
     flex-wrap: nowrap; 
 }
 
-/* Стили для кружочков цветов */
-.color-swatch { 
-    width: 22px; 
-    height: 22px; 
-    border-radius: 50%; 
-    cursor: pointer; 
-    border: 2px solid rgba(255,255,255,0.1); 
-    transition: transform 0.2s;
-}
-
-.color-swatch.active { 
-    border: 2px solid white; 
-    transform: scale(1.2); 
-}
-.palette { display: flex; gap: 8px; }
+.palette { display: flex; gap: 10px; }
 
 .color-swatch { 
-    width: 20px; 
-    height: 20px; 
+    width: 24px; 
+    height: 24px; 
     border-radius: 50%; 
     cursor: pointer; 
     border: 2px solid transparent; 
-    transition: transform 0.2s; 
+    transition: 0.2s; 
 }
 
 .color-swatch.active { 
-    border: 2px solid var(--accent); 
-    transform: scale(1.2); 
+    border-color: white; /* Белый ободок у выбранного цвета */
+    transform: scale(1.15); 
 }
 
+/* КРАСНЫЙ ПОЛЗУНОК РАЗМЕРА КИСТИ */
 #size-picker { 
-    width: 60px; 
-    cursor: pointer; 
+    -webkit-appearance: none; 
+    width: 90px; 
+    height: 6px; 
+    background: #4a4a4c; 
+    border-radius: 5px; 
+    outline: none; 
 }
 
+#size-picker::-webkit-slider-thumb { 
+    -webkit-appearance: none; 
+    width: 18px; 
+    height: 18px; 
+    background: #e74c3c; /* Красный цвет ползунка */
+    border-radius: 50%; 
+    cursor: pointer; 
+    border: 2px solid var(--canvas-panel);
+}
+
+/* КНОПКИ РИСОВАНИЯ */
 .tool-btn { 
-    background: #2d2d30; /* Темный фон кнопок */
-    border: 1px solid var(--border); 
-    padding: 8px 16px; 
-    border-radius: 10px; 
-    font-size: 0.85rem; 
-    color: white;
+    background: #3a443a; /* Темно-оливковый оттенок из фото */
+    border: 1px solid #4a544a; 
+    padding: 8px 18px; 
+    border-radius: 12px; 
+    font-size: 0.9rem; 
+    color: white; 
+    font-weight: bold;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
 }
 
-.tool-btn:hover {
-    background: #3a3a3c;
-}
+.tool-btn:hover { background: #4a544a; }
 
 /* === МОДАЛКА ВЫБОРА СЛОВА === */
 .modal { 
@@ -270,17 +252,17 @@ canvas {
     flex: 1; 
     display: flex; 
     flex-direction: column; 
-    margin: 10px 0; 
-    min-height: 0; /* Важно для внутреннего скролла */
+    margin: 15px 0; 
+    min-height: 0; 
 }
 
 #chat-box { 
     flex: 1; 
     background: var(--bg); 
-    padding: 10px; 
+    padding: 12px; 
     overflow-y: auto; 
     border: 1px solid var(--border); 
-    border-radius: 8px; 
+    border-radius: 10px; 
     margin-bottom: 10px; 
 }
 
@@ -292,10 +274,10 @@ canvas {
 }
 
 .scroll-list li { 
-    background: var(--bg); 
+    background: var(--panel); 
     margin-bottom: 8px; 
-    padding: 10px; 
-    border-radius: 8px; 
+    padding: 12px; 
+    border-radius: 10px; 
     border: 1px solid var(--border); 
 }
 
@@ -324,7 +306,7 @@ canvas {
     .players-section h3 { display: none; }
     #player-list { display: none; }
     
-    .game-core { order: 1; flex: none; height: 50vh; padding: 5px; }
+    .game-core { order: 1; flex: none; height: 50vh; padding: 5px; justify-content: flex-start; }
     .canvas-wrapper { max-height: 40vh; width: 100%; aspect-ratio: 4/3; }
     
     .side-panel.right { 
