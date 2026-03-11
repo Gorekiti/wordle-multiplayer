@@ -71,6 +71,59 @@ body {
     overflow: hidden; 
 }
 
+.game-box { 
+    width: 100%; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+}
+
+/* === ЛОББИ (ВОЗВРАЩЕНО) === */
+.lobby-container { 
+    background: var(--panel); 
+    padding: 30px; 
+    border-radius: 15px; 
+    width: 80%; 
+    max-width: 900px; 
+    border: 1px solid var(--border); 
+}
+
+.lobby-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 20px; 
+    border-bottom: 1px solid var(--border); 
+    padding-bottom: 15px; 
+}
+
+.rooms-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
+    gap: 20px; 
+    overflow-y: auto; 
+    max-height: 60vh; 
+    padding: 10px; 
+}
+
+.room-card { 
+    background: linear-gradient(145deg, #1e1e20, #161618); 
+    padding: 20px; 
+    border-radius: 12px; 
+    border: 1px solid var(--border); 
+    border-left: 4px solid var(--accent); 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: space-between; 
+    transition: transform 0.2s; 
+    text-align: left;
+}
+
+.room-card:hover { transform: translateY(-3px); }
+
+.room-info h3 { margin: 0 0 10px 0; font-size: 1.1rem; }
+.room-info p { margin: 0 0 15px 0; color: #aaa; }
+
 /* === ИНТЕРФЕЙС === */
 input { 
     background: var(--bg); 
