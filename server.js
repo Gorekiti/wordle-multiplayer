@@ -11,14 +11,12 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-let roomPlayers = {}; // { roomId: [{id, nick}, ...] }
+let roomPlayers = {}; 
 
 io.on('connection', (socket) => {
     socket.on('joinRoom', async ({ roomId, nickname }) => {
         socket.join(roomId);
-        
         if (!roomPlayers[roomId]) roomPlayers[roomId] = [];
-        // Проверяем, нет ли уже игрока с таким сокетом
         if (!roomPlayers[roomId].find(p => p.id === socket.id)) {
             roomPlayers[roomId].push({ id: socket.id, nick: nickname });
         }
@@ -31,7 +29,7 @@ io.on('connection', (socket) => {
             room = data;
         }
 
-        sendRoomUpdate(roomId);
+        broadcastRoomUpdate(roomId);
 
         if (roomPlayers[roomId].length >= 2 && room.status === 'waiting') {
             startNewRound(roomId);
@@ -39,15 +37,10 @@ io.on('connection', (socket) => {
     });
 
     socket.on('setWord', async ({ roomId, word }) => {
-        const wordUpper = word.toUpperCase();
         await supabase.from('game_rooms').update({ 
-            secret_word: wordUpper, 
-            status: 'playing', 
-            attempts_history: [] 
+            secret_word: word.toUpperCase(), status: 'playing', attempts_history: [] 
         }).eq('room_id', roomId);
-
-        const { data: room } = await supabase.from('game_rooms').select('*').eq('room_id', roomId).single();
-        io.to(roomId).emit('wordReady', { length: wordUpper.length, setter: room.setter_nick });
+        io.to(roomId).emit('wordReady', { length: word.length });
     });
 
     socket.on('makeGuess', async ({ roomId, guess, nickname }) => {
@@ -61,18 +54,16 @@ io.on('connection', (socket) => {
 
         const newHistory = [...(room.attempts_history || []), { guess, result }];
         await supabase.from('game_rooms').update({ attempts_history: newHistory }).eq('room_id', roomId);
-        
         io.to(roomId).emit('guessResult', { result, guess });
 
         if (guess === room.secret_word || newHistory.length >= 6) {
             if (guess === room.secret_word) {
                 const { data: p } = await supabase.from('players').select('score').eq('nickname', nickname).single();
                 await supabase.from('players').update({ score: (p?.score || 0) + 1 }).eq('nickname', nickname);
+                // Обновляем лидеров для ВСЕХ игроков на сервере сразу
+                broadcastGlobalLeaders();
             }
-            
             io.to(roomId).emit('gameOver', { winner: guess === room.secret_word ? nickname : 'Никто', word: room.secret_word });
-            
-            // Задержка перед новым раундом
             setTimeout(() => startNewRound(roomId), 6000);
         }
     });
@@ -80,15 +71,19 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         for (const roomId in roomPlayers) {
             roomPlayers[roomId] = roomPlayers[roomId].filter(p => p.id !== socket.id);
-            sendRoomUpdate(roomId);
+            broadcastRoomUpdate(roomId);
         }
     });
 });
 
-async function sendRoomUpdate(roomId) {
+async function broadcastGlobalLeaders() {
+    const { data: leaders } = await supabase.from('players').select('nickname, score').order('score', { ascending: false }).limit(10);
+    io.emit('globalLeaderUpdate', leaders); // Отправляем всем сокетам на сервере
+}
+
+async function broadcastRoomUpdate(roomId) {
     const { data: leaders } = await supabase.from('players').select('nickname, score').order('score', { ascending: false }).limit(10);
     const { data: room } = await supabase.from('game_rooms').select('*').eq('room_id', roomId).single();
-    
     io.to(roomId).emit('roomUpdate', { 
         session: room, 
         leaders: leaders || [], 
@@ -101,25 +96,21 @@ async function startNewRound(roomId) {
     if (!players || players.length < 2) return;
 
     const { data: room } = await supabase.from('game_rooms').select('*').eq('room_id', roomId).single();
-    
-    // Авто-смена ролей
     let setter = players[0].nick;
     let guesser = players[1].nick;
 
-    if (room && room.setter_nick === players[0].nick) {
+    // Смена ролей
+    if (room && room.setter_nick === setter) {
         setter = players[1].nick;
         guesser = players[0].nick;
     }
 
     await supabase.from('game_rooms').update({
-        setter_nick: setter,
-        guesser_nick: guesser,
-        status: 'setting',
-        attempts_history: [],
-        secret_word: null
+        setter_nick: setter, guesser_nick: guesser,
+        status: 'setting', attempts_history: [], secret_word: null
     }).eq('room_id', roomId);
 
     io.to(roomId).emit('gameStart', { setter, guesser });
 }
 
-server.listen(process.env.PORT || 3000, () => console.log('Server is running'));
+server.listen(process.env.PORT || 3000);

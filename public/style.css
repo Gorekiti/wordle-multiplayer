@@ -28,3 +28,17 @@ button:hover { opacity: 0.9; }
 /* Экран входа */
 #auth-screen { position: fixed; inset: 0; background: #121213; display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .auth-box { background: #1a1a1b; padding: 40px; border-radius: 8px; text-align: center; border: 1px solid #3a3a3c; }
+
+/* Добавь это в конец своего style.css */
+#toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+.toast { padding: 15px 25px; border-radius: 5px; color: white; font-weight: bold; animation: slideIn 0.3s ease-out; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+.toast.success { background: #538d4e; }
+.toast.error { background: #e74c3c; }
+.toast.info { background: #3498db; }
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.nav-btn:hover { background: #538d4e !important; }
