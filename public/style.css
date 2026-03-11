@@ -235,7 +235,12 @@ canvas {
     aspect-ratio: 9 / 5;
     height: auto;
     max-height: calc(100vh - 200px);
-    touch-action: none; /* <-- ВОТ ЭТА СТРОЧКА ИСПРАВИТ ПЛАНШЕТ И ТЕЛЕФОНЫ */
+    
+    /* УСИЛЕННАЯ ЗАЩИТА */
+    touch-action: none !important; 
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -webkit-user-drag: none !important;
 }
 
 .color-swatch.active { 
@@ -303,18 +308,18 @@ canvas {
     display: flex; 
     flex-direction: column; 
     margin: 10px 0; 
-    min-height: 0; /* Важно для внутреннего скролла */
+    min-height: 0; /* <-- ВАЖНО №1 */
 }
 
 #chat-box { 
     flex: 1; 
     background: var(--bg); 
     padding: 10px; 
-    overflow-y: auto; 
+    overflow-y: auto; /* Включает скроллбар */
     border: 1px solid var(--border); 
     border-radius: 8px; 
     margin-bottom: 10px; 
-    min-height: 0;
+    min-height: 0; /* <-- ВАЖНО №2 */
 }
 
 .scroll-list {
