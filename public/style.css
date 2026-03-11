@@ -77,6 +77,7 @@ body {
     padding: 15px;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .side-panel.right {
@@ -308,18 +309,18 @@ canvas {
     display: flex; 
     flex-direction: column; 
     margin: 10px 0; 
-    min-height: 0; /* <-- ВАЖНО №1 */
+    overflow: hidden; /* <-- ЗАПРЕЩАЕТ секции чата расширяться вниз */
 }
 
 #chat-box { 
     flex: 1; 
     background: var(--bg); 
     padding: 10px; 
-    overflow-y: auto; /* Включает скроллбар */
+    overflow-y: auto;  /* Оставляем скролл */
     border: 1px solid var(--border); 
     border-radius: 8px; 
     margin-bottom: 10px; 
-    min-height: 0; /* <-- ВАЖНО №2 */
+    height: 0;         /* <-- МАГИЯ ФЛЕКСБОКСА: заставляет блок считать свою высоту от родителя, а не от содержимого */
 }
 
 .scroll-list {
