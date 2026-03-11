@@ -100,11 +100,11 @@ body {
 }
 
 #status-msg {
-    position: relative; 
+    position: relative;
     top: 0;
     left: 0;
     transform: none;
-    margin-bottom: 20px; /* Отступ вниз до холста с инструментами */
+    margin-bottom: 10px; /* Уменьшили с 15/20px до 10px */
     font-size: 1.5rem;
     font-weight: bold;
     text-align: center;
@@ -112,6 +112,17 @@ body {
 }
 
 /* === ЛОББИ === */
+
+.rooms-grid p, 
+.empty-message {
+    grid-column: 1 / -1; /* Растягивает элемент на всю ширину сетки */
+    text-align: center;  /* Текст по центру */
+    width: 100%;
+    color: #aaa;         /* Делает текст чуть приглушенным */
+    padding: 50px 0;     /* Добавляет отступы сверху и снизу */
+    font-size: 1.1rem;
+}
+
 .lobby-container { 
     background: var(--panel); 
     padding: 30px; 
@@ -217,10 +228,11 @@ button:hover { filter: brightness(1.2); }
 
 canvas {
     background: white;
-    width: 900px;
-    height: 500px;
-    max-width: 100%;
-    /* Убрали border-radius и тени у самого холста */
+    width: 100%;         /* Занимает всю ширину обертки... */
+    max-width: 900px;    /* ...но не больше 900px */
+    aspect-ratio: 9 / 5; /* Сохраняет твои пропорции (900х500) */
+    height: auto;        /* Высота подстраивается под ширину */
+    max-height: calc(100vh - 200px); /* САМОЕ ВАЖНОЕ: не дает холсту вырасти больше высоты экрана минус отступы */
 }
 
 .color-swatch.active { 
