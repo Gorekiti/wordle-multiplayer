@@ -6,10 +6,12 @@ body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; ma
 .box { background: var(--panel); padding: 40px; border-radius: 20px; text-align: center; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 .logo-text span { color: var(--accent); }
 
-/* ФИКС ЦЕНТРИРОВАНИЯ И ШИРИНЫ */
+/* ФИКС ЦЕНТРИРОВАНИЯ И ШИРИНЫ СЕТКИ */
 .app-container { display: grid; grid-template-columns: 280px 1fr 320px; height: 100vh; width: 100vw; }
 .side-panel { background: var(--panel); border: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
-.game-core { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; position: relative; overflow-y: auto; }
+
+/* ФИКС ВЫРАВНИВАНИЯ КОНТЕНТА (чтобы Wordle не сплющивало по центру) */
+.game-core { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 50px 20px; position: relative; overflow-y: auto; overflow-x: hidden; }
 
 /* Лобби и Карточки Комнат */
 .lobby-container { background: var(--panel); padding: 30px; border-radius: 15px; width: 80%; max-width: 900px; border: 1px solid var(--border); }
@@ -44,10 +46,10 @@ input { background: var(--bg); border: 1px solid var(--border); color: white; pa
 button { background: var(--accent); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
 button:hover { filter: brightness(1.2); }
 
-/* Canvas и инструменты */
-.canvas-wrapper { position: relative; background: white; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-canvas { touch-action: none; display: block; }
-.toolbar { background: #1a1a1b; padding: 10px; border-radius: 0 0 8px 8px; display: flex; gap: 15px; align-items: center; justify-content: center; border-top: 1px solid var(--border); }
+/* ФИКС CANVAS И ИНСТРУМЕНТОВ (чтобы не было горизонтальных ползунков) */
+.canvas-wrapper { position: relative; background: white; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 100%; overflow: hidden; }
+canvas { touch-action: none; display: block; max-width: 100%; }
+.toolbar { background: #1a1a1b; padding: 10px; border-radius: 0 0 8px 8px; display: flex; gap: 15px; align-items: center; justify-content: center; border-top: 1px solid var(--border); flex-wrap: wrap; }
 .palette { display: flex; gap: 5px; }
 .color-swatch { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
 .color-swatch.active { border: 2px solid #538d4e; transform: scale(1.1); }
@@ -59,7 +61,7 @@ canvas { touch-action: none; display: block; }
 .options-row { display: flex; gap: 15px; margin-top: 15px; }
 .word-btn { padding: 15px 30px; font-size: 1.2rem; }
 
-#grid { display: grid; gap: 8px; justify-content: center; margin-bottom: 10px;}
+#grid { display: grid; gap: 8px; justify-content: center; margin-bottom: 20px;}
 .row { display: flex; gap: 8px; }
 .tile { width: 50px; height: 50px; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.4rem; }
 .correct { background: var(--accent); border-color: var(--accent); }
@@ -70,4 +72,4 @@ canvas { touch-action: none; display: block; }
 .toast { padding: 15px 25px; background: var(--panel); border-left: 5px solid var(--accent); margin-bottom: 10px; animation: slideIn 0.3s ease; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
 @keyframes slideIn { from { transform: translateX(100%); } }
 
-.input-group { display: flex; gap: 10px; justify-content: center; width: 100%;}
+.input-group { display: flex; gap: 10px; justify-content: center; width: 100%; }

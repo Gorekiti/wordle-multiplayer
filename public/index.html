@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Hub</title>
+    <title>Game Hub Platform</title>
     <link rel="stylesheet" href="style.css">
     <script src="/socket.io/socket.io.js"></script>
 </head>
@@ -48,14 +48,16 @@
                 <h2 id="status-msg">Ожидание...</h2>
                 
                 <div id="wordle-ui" class="hidden game-box">
-                    <div id="grid"></div>
                     <div id="setup-zone" class="hidden input-group">
-                        <input type="text" id="secret-word" placeholder="Загадай...">
-                        <button onclick="sendSecret()">OK</button>
+                        <input type="text" id="secret-word" placeholder="Загадай слово (2-10)">
+                        <button onclick="sendSecret()">Загадать</button>
+                    </div>
+                    <div id="grid-zone">
+                        <div id="grid"></div>
                     </div>
                     <div id="input-wrapper" class="hidden input-group">
-                        <input type="text" id="guess-input" placeholder="Догадка...">
-                        <button onclick="sendGuess()">Ввод</button>
+                        <input type="text" id="guess-input" placeholder="Твой ответ">
+                        <button onclick="sendGuess()">OK</button>
                     </div>
                 </div>
 
@@ -101,6 +103,10 @@
             </aside>
         </div>
     </div>
-    <script src="script.js"></script>
+    
+    <script src="js/socket.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/wordle.js"></script>
+    <script src="js/croc.js"></script>
 </body>
 </html>
