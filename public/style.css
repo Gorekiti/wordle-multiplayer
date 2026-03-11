@@ -89,10 +89,11 @@ body {
     position:relative;
 }
 
-.game-box{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
+.game-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 40px; /* Добавили место под текст "Ожидание..." */
 }
 
 /* === ЛОББИ === */
@@ -186,36 +187,35 @@ button:hover { filter: brightness(1.2); }
 }
 
 /* === ХОЛСТ: ФИКС ВЫСОТЫ И ИНСТРУМЕНТЫ СВЕРХУ === */
-/* В обертке холста меняем порядок */
 .canvas-wrapper {
-    max-width:950px;
+    max-width: 950px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: #111;
+    background: #1a1a1a; /* Цвет фона под тулбар */
     border-radius: 12px;
-    padding: 12px;
+    overflow: hidden; /* Важно: обрезает края холста и тулбара под общее скругление */
+    position: relative; /* Важно: чтобы таймер встал в угол именно холста */
     box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    /* Убрали padding, чтобы холст и панель прилипли к краям */
 }
 
 canvas {
     background: white;
-    border-radius: 8px;
     width: 900px;
     height: 500px;
     max-width: 100%;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    /* Убрали border-radius и отдельную тень, они теперь управляются через .canvas-wrapper */
 }
 
 .toolbar {
     width: 100%;
-    margin-top: 8px;
     background: #1a1a1a;
-    border-radius: 8px;
-    padding: 8px 12px;
+    padding: 10px 15px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    /* Убрали margin-top и border-radius, чтобы прилипло к холсту */
 }
 
 .color-swatch.active { 
@@ -347,6 +347,12 @@ canvas {
     .chat-section { margin-bottom: 50px; }
     #chat-input { position: fixed; bottom: 60px; left: 10px; width: calc(100% - 20px); }
     .invite-btn { position: fixed; bottom: 10px; left: 10px; width: calc(100% - 20px); height: 40px; }
+}
+
+.full-width-btn {
+    width: 100%;
+    display: block;
+    margin-bottom: 15px;
 }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
