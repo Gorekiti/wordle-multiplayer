@@ -17,20 +17,26 @@
 
     <div id="game-ui" class="main-layout hidden">
         <aside class="sidebar">
+            <button class="home-btn" onclick="goHome()">🏠 Домой</button>
             <h3>🏆 Лидеры</h3>
             <ul id="leaderboard"></ul>
         </aside>
 
         <main class="game-area">
+            <div id="result-display" class="hidden"></div>
             <h2 id="status-msg">Ожидание соперника...</h2>
+            
             <div id="setup-zone" class="hidden">
                 <input type="text" id="secret-word" placeholder="Загадай слово (2-10)">
                 <button onclick="sendSecret()">Загадать</button>
             </div>
+
             <div id="grid-zone" class="hidden">
                 <div id="grid"></div>
-                <input type="text" id="guess-input" placeholder="Твой ответ">
-                <button onclick="sendGuess()">OK</button>
+                <div id="input-wrapper">
+                    <input type="text" id="guess-input" placeholder="Твой ответ">
+                    <button id="guess-btn" onclick="sendGuess()">OK</button>
+                </div>
             </div>
         </main>
 

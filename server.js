@@ -1,95 +1,90 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
+
+let roomPlayers = {}; // { roomId: [nick1, nick2] }
 
 io.on('connection', (socket) => {
-    
     socket.on('joinRoom', async ({ roomId, nickname }) => {
         socket.join(roomId);
-        
-        // Регистрируем игрока
+        if (!roomPlayers[roomId]) roomPlayers[roomId] = [];
+        if (!roomPlayers[roomId].includes(nickname)) roomPlayers[roomId].push(nickname);
+
         await supabase.from('players').upsert({ nickname });
-        
-        // Проверяем/создаем комнату в базе
         let { data: room } = await supabase.from('game_rooms').select('*').eq('room_id', roomId).single();
+        
         if (!room) {
-            const { data: newRoom } = await supabase.from('game_rooms').insert([
-                { room_id: roomId, status: 'waiting', attempts_history: [] }
-            ]).select().single();
-            room = newRoom;
+            const { data } = await supabase.from('game_rooms').insert([{ room_id: roomId, status: 'waiting' }]).select().single();
+            room = data;
         }
 
-        // Получаем список игроков в этой конкретной комнате
-        const clients = io.sockets.adapter.rooms.get(roomId);
-        const numClients = clients ? clients.size : 0;
+        const { data: leaders } = await supabase.from('players').select('nickname, score').order('score', { ascending: false }).limit(10);
+        io.to(roomId).emit('roomUpdate', { session: room, leaders });
 
-        // Рассылаем инфо о комнате
-        io.to(roomId).emit('roomUpdate', {
-            playersCount: numClients,
-            session: room
-        });
-
-        // Если в комнате двое и она пуста — стартуем
-        if (numClients === 2 && room.status === 'waiting') {
-            startRoomRound(roomId);
+        if (roomPlayers[roomId].length >= 2 && room.status === 'waiting') {
+            startNewRound(roomId);
         }
     });
 
     socket.on('setWord', async ({ roomId, word, nickname }) => {
-        const wordUpper = word.toUpperCase();
-        await supabase.from('game_rooms').update({
-            secret_word: wordUpper,
-            status: 'playing',
-            attempts_history: []
-        }).eq('room_id', roomId);
-
-        io.to(roomId).emit('wordReady', { length: wordUpper.length, setter: nickname });
+        await supabase.from('game_rooms').update({ secret_word: word, status: 'playing', attempts_history: [] }).eq('room_id', roomId);
+        io.to(roomId).emit('wordReady', { length: word.length, setter: nickname });
     });
 
     socket.on('makeGuess', async ({ roomId, guess, nickname }) => {
         const { data: room } = await supabase.from('game_rooms').select('*').eq('room_id', roomId).single();
-        if (nickname !== room.guesser_nick) return;
-
         const result = guess.split('').map((char, i) => {
             if (char === room.secret_word[i]) return 'correct';
-            if (room.secret_word.includes(char)) return 'present';
-            return 'absent';
+            return room.secret_word.includes(char) ? 'present' : 'absent';
         });
 
-        const newHistory = [...room.attempts_history, { guess, result }];
+        const newHistory = [...(room.attempts_history || []), { guess, result }];
         await supabase.from('game_rooms').update({ attempts_history: newHistory }).eq('room_id', roomId);
-
+        
         io.to(roomId).emit('guessResult', { result, guess });
 
-        if (guess === room.secret_word) {
-            // Обновляем счет в таблице игроков
-            const { data: p } = await supabase.from('players').select('score').eq('nickname', nickname).single();
-            await supabase.from('players').update({ score: (p?.score || 0) + 1 }).eq('nickname', nickname);
-            
-            io.to(roomId).emit('gameOver', { winner: nickname, word: room.secret_word });
-            setTimeout(() => startRoomRound(roomId), 4000);
+        if (guess === room.secret_word || newHistory.length >= 6) {
+            if (guess === room.secret_word) {
+                const { data: p } = await supabase.from('players').select('score').eq('nickname', nickname).single();
+                await supabase.from('players').update({ score: (p?.score || 0) + 1 }).eq('nickname', nickname);
+            }
+            io.to(roomId).emit('gameOver', { winner: guess === room.secret_word ? nickname : 'Никто', word: room.secret_word });
+            setTimeout(() => startNewRound(roomId), 6000);
         }
     });
 });
 
-async function startRoomRound(roomId) {
-    // Логика выбора кто загадывает (простая ротация)
+async function startNewRound(roomId) {
+    const players = roomPlayers[roomId];
+    if (!players || players.length < 2) return;
+
     const { data: room } = await supabase.from('game_rooms').select('*').eq('room_id', roomId).single();
     
-    // В реальности тут нужно брать ники активных сокетов, но для простоты:
-    // Мы просто сбросим статус, чтобы игроки нажали "Готов" или назначим их
-    // Для полноценной комнаты лучше передавать ники при joinRoom
+    // Меняем роли
+    let setter = players[0];
+    let guesser = players[1];
+    if (room && room.setter_nick === players[0]) {
+        setter = players[1];
+        guesser = players[0];
+    }
+
+    await supabase.from('game_rooms').update({
+        setter_nick: setter,
+        guesser_nick: guesser,
+        status: 'setting',
+        attempts_history: [],
+        secret_word: null
+    }).eq('room_id', roomId);
+
+    io.to(roomId).emit('gameStart', { setter, guesser });
 }
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server live on ${PORT}`));
+server.listen(process.env.PORT || 3000);
