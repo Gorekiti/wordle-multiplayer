@@ -35,9 +35,25 @@ function openLobby(mode) {
     socket.emit('getRooms');
 }
 
+// === ФОНОВОЕ АВТООБНОВЛЕНИЕ ЛОББИ ===
+setInterval(() => {
+    const lobbyScreen = document.getElementById('lobby-screen');
+    if (lobbyScreen && !lobbyScreen.classList.contains('hidden')) {
+        socket.emit('getRooms');
+    }
+}, 2000); // Каждые 2 секунды сервер бесшумно отдает свежий список
+
 socket.on('roomsList', (rooms) => {
     const list = document.getElementById('rooms-list');
-    list.innerHTML = rooms.filter(r => r.mode === myMode).map(r => `
+    const filteredRooms = rooms.filter(r => r.mode === myMode);
+    
+    // Если комнат нет, показываем сообщение
+    if (filteredRooms.length === 0) {
+        list.innerHTML = `<p style="text-align: center; width: 100%; color: #aaa; margin-top: 20px;">Нет открытых комнат. Создай свою!</p>`;
+        return;
+    }
+
+    list.innerHTML = filteredRooms.map(r => `
         <div class="room-card">
             <div class="room-info">
                 <h3>Комната: ${r.creator_nick || 'Неизвестно'}</h3>
@@ -63,7 +79,6 @@ socket.on('joinError', (msg) => {
 function createRoom() { socket.emit('createRoom', { mode: myMode, nickname: myNick }); }
 socket.on('roomCreated', (id) => join(id));
 
-// Обновление состояния комнаты + Скрытие лишнего UI
 socket.on('roomUpdate', ({ session, leaders, activePlayers, maxPlayers }) => {
     document.getElementById('lobby-screen').classList.add('hidden');
     document.getElementById('game-screen').classList.remove('hidden');
@@ -77,7 +92,6 @@ socket.on('roomUpdate', ({ session, leaders, activePlayers, maxPlayers }) => {
         document.getElementById('wordle-ui').classList.remove('hidden');
         document.getElementById('croc-ui').classList.add('hidden');
         
-        // Скрываем таймер и чат
         document.getElementById('timer-display').classList.add('hidden');
         document.getElementById('chat-container').classList.add('hidden');
         
@@ -87,7 +101,6 @@ socket.on('roomUpdate', ({ session, leaders, activePlayers, maxPlayers }) => {
         document.getElementById('croc-ui').classList.remove('hidden');
         document.getElementById('wordle-ui').classList.add('hidden');
         
-        // Показываем таймер и чат
         document.getElementById('timer-display').classList.remove('hidden');
         document.getElementById('chat-container').classList.remove('hidden');
     }

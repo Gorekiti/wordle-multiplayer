@@ -35,7 +35,7 @@ body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; ma
 .chat-msg { margin-bottom: 5px; word-break: break-word; }
 
 .timer-bar { font-size: 1.5rem; color: var(--accent); background: rgba(83,141,78,0.1); padding: 5px 25px; border-radius: 40px; margin-bottom: 10px; margin-top: 5px; font-weight: bold; border: 1px solid rgba(83,141,78,0.3); }
-#status-msg { margin: 0 0 15px 0; font-size: 1.2rem; }
+#status-msg { margin: 0 0 15px 0; font-size: 1.2rem; text-align: center; }
 
 input { background: var(--bg); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; }
 button { background: var(--accent); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
@@ -63,7 +63,7 @@ canvas { touch-action: none; display: block; width: 100%; height: auto; aspect-r
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
-.options-row { display: flex; gap: 15px; margin-top: 15px; }
+.options-row { display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; justify-content: center;}
 .word-btn { padding: 15px 30px; font-size: 1.2rem; }
 
 #grid { display: grid; gap: 8px; justify-content: center; margin-bottom: 20px;}
@@ -78,3 +78,43 @@ canvas { touch-action: none; display: block; width: 100%; height: auto; aspect-r
 @keyframes slideIn { from { transform: translateX(100%); } }
 
 .input-group { display: flex; gap: 10px; justify-content: center; width: 100%; }
+
+/* =======================================
+   МОБИЛЬНАЯ АДАПТАЦИЯ (ТЕЛЕФОНЫ И ПЛАНШЕТЫ)
+   ======================================= */
+@media (max-width: 850px) {
+    body { overflow-y: auto; } /* Разрешаем скролл всей страницы */
+    
+    .app-container {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+    }
+    
+    /* Убираем боковые границы у панелей и делаем их на всю ширину */
+    .side-panel {
+        width: 100%;
+        border-left: none;
+        border-right: none;
+        border-top: 1px solid var(--border);
+        box-sizing: border-box;
+    }
+    
+    /* Меняем порядок блоков: 1. Игра -> 2. Игроки/Чат -> 3. Рейтинг */
+    .game-core { order: 1; padding: 20px 10px; min-height: 50vh; }
+    .side-panel.right { order: 2; border-top: 2px solid var(--accent); }
+    .side-panel.left { order: 3; }
+    
+    /* Фикс чата для мобилок */
+    .chat-section { height: 300px; display: flex; flex-direction: column; }
+    #chat-box { flex-grow: 1; }
+    
+    /* Уменьшаем шрифты победного экрана */
+    #win-word { font-size: 1.8rem; }
+    .win-content { padding: 20px; width: 85%; box-sizing: border-box; }
+    
+    /* Адаптация лобби */
+    .lobby-container { width: 95%; padding: 15px; box-sizing: border-box; }
+    .rooms-grid { grid-template-columns: 1fr; } /* Комнаты в один столбец */
+}

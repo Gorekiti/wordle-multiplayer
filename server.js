@@ -14,21 +14,26 @@ app.use(express.static(path.join(__dirname, 'public')));
 let roomPlayers = {}; 
 let roomTimers = {}; 
 let roomScores = {}; 
-let roomLastSetter = {}; // Запоминаем, кто рисовал последним
+let roomLastSetter = {}; 
 
 const ROUND_TIME = 80; 
 const CROC_WORDS = ['Телефон', 'Борщ', 'Программист', 'Гитара', 'Космос', 'Крыса', 'Университет', 'Пицца', 'Дракон', 'Скейтборд', 'Машина', 'Собака', 'Дерево'];
 
+// Улучшенная функция лобби с отловом ошибок БД
 async function broadcastRoomsList() {
     try {
-        const { data: rooms } = await supabase.from('game_rooms').select('*').order('created_at', { ascending: false });
+        const { data: rooms, error } = await supabase.from('game_rooms').select('*').order('created_at', { ascending: false });
+        if (error) {
+            console.error("Ошибка БД при загрузке лобби:", error.message);
+            return;
+        }
         const list = (rooms || []).map(r => ({
             ...r,
             currentCount: roomPlayers[r.room_id]?.length || 0
         }));
         io.emit('roomsList', list);
     } catch (err) {
-        console.error("Ошибка при получении лобби:", err.message);
+        console.error("Критическая ошибка лобби:", err.message);
     }
 }
 
@@ -135,7 +140,6 @@ io.on('connection', (socket) => {
         io.to(socket.roomId).emit('gameStarted', { wordLength: word.length });
         
         startTimer(socket.roomId, async () => {
-            // Если время вышло, никто не угадал
             const { data: r } = await supabase.from('game_rooms').select('setter_nick').eq('room_id', socket.roomId).single();
             await supabase.from('game_rooms').update({ status: 'ended' }).eq('room_id', socket.roomId);
             
@@ -151,10 +155,8 @@ io.on('connection', (socket) => {
         const { data: room } = await supabase.from('game_rooms').select('*').eq('room_id', socket.roomId).single();
         if (!room) return;
         
-        // Триггер победы работает только если статус playing
         if (room.mode === 'croc' && room.status === 'playing' && socket.nickname !== room.setter_nick) {
             if (text.toLowerCase().trim() === room.secret_word?.toLowerCase()) {
-                // Блокируем комнату, чтобы другие не угадали в эту же секунду
                 await supabase.from('game_rooms').update({ status: 'ended' }).eq('room_id', socket.roomId);
                 
                 io.to(socket.roomId).emit('chatMessage', { text: `🎉 ${socket.nickname} угадал слово!`, type: 'system-win' });
@@ -162,14 +164,12 @@ io.on('connection', (socket) => {
                 broadcastRoomUpdate(socket.roomId, room);
                 stopTimer(socket.roomId);
                 
-                // Вызываем красивый экран победы
                 io.to(socket.roomId).emit('crocWin', {
                     word: room.secret_word,
                     setter: room.setter_nick,
                     winner: socket.nickname
                 });
 
-                // Ждем 5 секунд и запускаем выбор следующего
                 setTimeout(() => startCrocSelection(socket.roomId), 5000);
                 return;
             }
@@ -236,14 +236,13 @@ function startCrocSelection(roomId) {
     const players = roomPlayers[roomId];
     if (!players || players.length < 2) return;
     
-    // МЯГКИЕ КРИТЕРИИ: Убираем того, кто только что рисовал, если есть другие игроки
     let availablePlayers = players;
     if (roomLastSetter[roomId] && players.length > 1) {
         availablePlayers = players.filter(p => p.nick !== roomLastSetter[roomId]);
     }
     
     const setter = availablePlayers[Math.floor(Math.random() * availablePlayers.length)];
-    roomLastSetter[roomId] = setter.nick; // Сохраняем его на будущее
+    roomLastSetter[roomId] = setter.nick; 
     
     const shuffled = [...CROC_WORDS].sort(() => 0.5 - Math.random());
     

@@ -1,26 +1,46 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let drawing = false, currentColor = '#000000';
+let prevPos = null; // Память о прошлой точке для плавной отрисовки
 
 canvas.addEventListener('pointerdown', (e) => {
     if (!isSetter || myMode !== 'croc') return;
-    drawing = true; ctx.beginPath();
-    const pos = getPos(e); ctx.moveTo(pos.x, pos.y);
+    drawing = true; 
+    prevPos = getPos(e); // Запоминаем точку старта
 });
 
 canvas.addEventListener('pointermove', (e) => {
-    if (!drawing) return;
-    const pos = getPos(e);
+    if (!drawing || !prevPos) return;
+    const currentPos = getPos(e);
     const size = document.getElementById('size-picker').value;
-    const data = { x: pos.x, y: pos.y, color: currentColor, size: size };
-    socket.emit('drawing', data); drawLocal(data);
+    
+    // Отправляем и ПРОШЛУЮ, и ТЕКУЩУЮ координаты
+    const data = { 
+        prevX: prevPos.x, prevY: prevPos.y, 
+        x: currentPos.x, y: currentPos.y, 
+        color: currentColor, size: size 
+    };
+    
+    socket.emit('drawing', data); 
+    drawLocal(data);
+    
+    prevPos = currentPos; // Обновляем прошлую точку
 });
 
-window.addEventListener('pointerup', () => drawing = false);
+window.addEventListener('pointerup', () => {
+    drawing = false;
+    prevPos = null;
+});
 
 function drawLocal(data) {
-    ctx.lineWidth = data.size; ctx.lineCap = 'round'; ctx.strokeStyle = data.color;
-    ctx.lineTo(data.x, data.y); ctx.stroke();
+    ctx.beginPath(); // Обязательно начинаем новый путь!
+    ctx.lineWidth = data.size; 
+    ctx.lineCap = 'round'; 
+    ctx.lineJoin = 'round'; // Сглаживание изломов линии
+    ctx.strokeStyle = data.color;
+    ctx.moveTo(data.prevX, data.prevY); // Встаем в прошлую точку
+    ctx.lineTo(data.x, data.y);         // Ведем линию в текущую
+    ctx.stroke();
 }
 
 function getPos(e) {
@@ -55,10 +75,9 @@ socket.on('crocWin', ({ word, setter, winner }) => {
         guesserBlock.classList.remove('hidden');
         document.getElementById('win-guesser').innerText = winner;
     } else {
-        guesserBlock.classList.add('hidden'); // Если никто не угадал
+        guesserBlock.classList.add('hidden');
     }
 
-    // Локальный визуальный таймер
     let ticks = 5;
     document.getElementById('win-timer').innerText = ticks;
     const iv = setInterval(() => {
@@ -71,7 +90,6 @@ socket.on('crocWin', ({ word, setter, winner }) => {
 socket.on('crocSelection', ({ setter, options }) => {
     resetUI(); 
     
-    // Прячем экран победы и очищаем холст только локально (чтобы не спамить сервер)
     document.getElementById('croc-win-screen').classList.add('hidden');
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
 
