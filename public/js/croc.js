@@ -25,7 +25,9 @@ function drawLocal(data) {
 
 function getPos(e) {
     const rect = canvas.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    const scaleX = canvas.width / rect.width;    
+    const scaleY = canvas.height / rect.height;  
+    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
 }
 
 function setColor(color, el) {
@@ -40,8 +42,39 @@ function setEraser(el) {
     el.classList.add('active');
 }
 
+// === ЭКРАН ПОБЕДЫ ===
+socket.on('crocWin', ({ word, setter, winner }) => {
+    const winScreen = document.getElementById('croc-win-screen');
+    winScreen.classList.remove('hidden');
+    
+    document.getElementById('win-word').innerText = word;
+    document.getElementById('win-setter').innerText = setter;
+    
+    const guesserBlock = document.getElementById('win-guesser-block');
+    if (winner) {
+        guesserBlock.classList.remove('hidden');
+        document.getElementById('win-guesser').innerText = winner;
+    } else {
+        guesserBlock.classList.add('hidden'); // Если никто не угадал
+    }
+
+    // Локальный визуальный таймер
+    let ticks = 5;
+    document.getElementById('win-timer').innerText = ticks;
+    const iv = setInterval(() => {
+        ticks--;
+        if (ticks <= 0) clearInterval(iv);
+        else document.getElementById('win-timer').innerText = ticks;
+    }, 1000);
+});
+
 socket.on('crocSelection', ({ setter, options }) => {
     resetUI(); 
+    
+    // Прячем экран победы и очищаем холст только локально (чтобы не спамить сервер)
+    document.getElementById('croc-win-screen').classList.add('hidden');
+    ctx.clearRect(0, 0, canvas.width, canvas.height); 
+
     isSetter = (myNick === setter);
     if (isSetter) {
         document.getElementById('word-picker').classList.remove('hidden');
@@ -59,7 +92,9 @@ function chooseWord(word) {
 }
 
 socket.on('gameStarted', ({ wordLength }) => {
-    if (!isSetter && myMode === 'croc') document.getElementById('status-msg').innerText = `Угадай (${wordLength} букв)`;
+    if (!isSetter && myMode === 'croc') {
+        document.getElementById('status-msg').innerText = `Угадай (${wordLength} букв)`;
+    }
 });
 
 socket.on('drawing', (data) => drawLocal(data));

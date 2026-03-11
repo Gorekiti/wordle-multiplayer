@@ -68,6 +68,16 @@
                     </div>
                     <div class="canvas-wrapper">
                         <canvas id="canvas" width="600" height="400"></canvas>
+                        
+                        <div id="croc-win-screen" class="hidden">
+                            <div class="win-content">
+                                <h2 id="win-word">СЛОВО</h2>
+                                <p class="win-player">🖌️ Рисовал(а): <span id="win-setter"></span></p>
+                                <p class="win-player" id="win-guesser-block">🏆 Угадал(а): <span id="win-guesser"></span></p>
+                                <div class="win-timer-block">⏱ След. раунд через: <span id="win-timer">5</span></div>
+                            </div>
+                        </div>
+
                         <div id="croc-tools" class="toolbar">
                             <div class="palette">
                                 <div class="color-swatch active" style="background:#000000" onclick="setColor('#000000', this)"></div>
@@ -93,7 +103,7 @@
                     <ul id="player-list" class="scroll-list player-chips"></ul>
                 </div>
                 
-                <div class="chat-section">
+                <div class="chat-section" id="chat-container">
                     <h3>💬 Чат</h3>
                     <div id="chat-box"></div>
                     <input type="text" id="chat-input" placeholder="Сообщение...">

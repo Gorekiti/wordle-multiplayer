@@ -2,11 +2,10 @@ const socket = io();
 let roomId = new URLSearchParams(window.location.search).get('room');
 let myMode = '', myNick = localStorage.getItem('wordle-nick') || '';
 let isSetter = false;
-let isGuesser = false; // Для Wordle логики
+let isGuesser = false; 
 
 if (myNick) document.getElementById('nick-input').value = myNick;
 
-// Логика прямого перехода по ссылке
 if (roomId) {
     if (myNick && myNick.length >= 2) {
         document.getElementById('auth-screen').classList.add('hidden');
@@ -64,7 +63,7 @@ socket.on('joinError', (msg) => {
 function createRoom() { socket.emit('createRoom', { mode: myMode, nickname: myNick }); }
 socket.on('roomCreated', (id) => join(id));
 
-// Обновление состояния комнаты
+// Обновление состояния комнаты + Скрытие лишнего UI
 socket.on('roomUpdate', ({ session, leaders, activePlayers, maxPlayers }) => {
     document.getElementById('lobby-screen').classList.add('hidden');
     document.getElementById('game-screen').classList.remove('hidden');
@@ -77,15 +76,31 @@ socket.on('roomUpdate', ({ session, leaders, activePlayers, maxPlayers }) => {
     if (myMode === 'wordle') {
         document.getElementById('wordle-ui').classList.remove('hidden');
         document.getElementById('croc-ui').classList.add('hidden');
+        
+        // Скрываем таймер и чат
+        document.getElementById('timer-display').classList.add('hidden');
+        document.getElementById('chat-container').classList.add('hidden');
+        
         if (session.status === 'waiting' && typeof initPlaceholderGrid === 'function') initPlaceholderGrid(); 
         if (session.status === 'playing' && typeof syncGame === 'function') syncGame(session);
     } else {
         document.getElementById('croc-ui').classList.remove('hidden');
         document.getElementById('wordle-ui').classList.add('hidden');
+        
+        // Показываем таймер и чат
+        document.getElementById('timer-display').classList.remove('hidden');
+        document.getElementById('chat-container').classList.remove('hidden');
     }
 });
 
-// Глобальный таймер
+socket.on('gameStart', ({ setter, guesser }) => {
+    resetUI(); 
+    isSetter = (myNick === setter);
+    document.getElementById('status-msg').innerText = isSetter ? `Загадай слово для ${guesser}` : `Ждем слово от ${setter}...`;
+    if (isSetter) document.getElementById('setup-zone').classList.remove('hidden');
+    if (myMode === 'wordle' && typeof initPlaceholderGrid === 'function') initPlaceholderGrid();
+});
+
 socket.on('timer', (seconds) => {
     const mins = Math.floor(seconds / 60); const secs = seconds % 60;
     document.getElementById('timer-display').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;

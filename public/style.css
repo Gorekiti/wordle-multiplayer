@@ -6,14 +6,10 @@ body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; ma
 .box { background: var(--panel); padding: 40px; border-radius: 20px; text-align: center; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 .logo-text span { color: var(--accent); }
 
-/* ФИКС ЦЕНТРИРОВАНИЯ И ШИРИНЫ СЕТКИ */
-.app-container { display: grid; grid-template-columns: 280px 1fr 320px; height: 100vh; width: 100vw; }
+.app-container { display: grid; grid-template-columns: 220px 1fr 280px; height: 100vh; width: 100vw; }
 .side-panel { background: var(--panel); border: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
+.game-core { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 15px; position: relative; overflow-y: auto; overflow-x: hidden; }
 
-/* ФИКС ВЫРАВНИВАНИЯ КОНТЕНТА (чтобы Wordle не сплющивало по центру) */
-.game-core { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 50px 20px; position: relative; overflow-y: auto; overflow-x: hidden; }
-
-/* Лобби и Карточки Комнат */
 .lobby-container { background: var(--panel); padding: 30px; border-radius: 15px; width: 80%; max-width: 900px; border: 1px solid var(--border); }
 .lobby-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
 .rooms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; overflow-y: auto; max-height: 60vh; padding: 10px; }
@@ -23,7 +19,6 @@ body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; ma
 .room-info p { margin: 0 0 15px 0; color: #aaa; }
 .join-btn { width: 100%; }
 
-/* Списки с прокруткой */
 .stat-section, .players-section { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .scroll-list { flex: 1; overflow-y: auto; padding-right: 5px; list-style: none; padding-left: 0; margin: 0; }
 .scroll-list::-webkit-scrollbar { width: 5px; }
@@ -33,22 +28,21 @@ body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; ma
 .flex-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 .badge { background: var(--accent); padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; color: white; }
 
-/* Чат */
 .chat-section { flex: 1.5; display: flex; flex-direction: column; margin: 15px 0; min-height: 0; }
 #chat-box { flex: 1; background: var(--bg); padding: 10px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; }
 .chat-sys { color: #888; font-size: 0.9em; margin-bottom: 5px; text-align: center; }
 .chat-sys.win { color: var(--accent); font-size: 1em; }
 .chat-msg { margin-bottom: 5px; word-break: break-word; }
 
-.timer-bar { font-size: 2rem; color: var(--accent); background: rgba(83,141,78,0.1); padding: 10px 30px; border-radius: 40px; margin-bottom: 20px; font-weight: bold; border: 1px solid rgba(83,141,78,0.3); }
+.timer-bar { font-size: 1.5rem; color: var(--accent); background: rgba(83,141,78,0.1); padding: 5px 25px; border-radius: 40px; margin-bottom: 10px; margin-top: 5px; font-weight: bold; border: 1px solid rgba(83,141,78,0.3); }
+#status-msg { margin: 0 0 15px 0; font-size: 1.2rem; }
 
 input { background: var(--bg); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; }
 button { background: var(--accent); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
 button:hover { filter: brightness(1.2); }
 
-/* ФИКС CANVAS И ИНСТРУМЕНТОВ (чтобы не было горизонтальных ползунков) */
-.canvas-wrapper { position: relative; background: white; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 100%; overflow: hidden; }
-canvas { touch-action: none; display: block; max-width: 100%; }
+.canvas-wrapper { position: relative; background: white; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; max-width: 600px; display: flex; flex-direction: column; overflow: hidden; }
+canvas { touch-action: none; display: block; width: 100%; height: auto; aspect-ratio: 3/2; }
 .toolbar { background: #1a1a1b; padding: 10px; border-radius: 0 0 8px 8px; display: flex; gap: 15px; align-items: center; justify-content: center; border-top: 1px solid var(--border); flex-wrap: wrap; }
 .palette { display: flex; gap: 5px; }
 .color-swatch { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
@@ -56,8 +50,19 @@ canvas { touch-action: none; display: block; max-width: 100%; }
 .tool-btn { background: var(--bg); border: 1px solid var(--border); padding: 5px 10px; }
 .tool-btn.active { border-color: #538d4e; }
 
-/* Модалка выбора слова */
-.modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; border-radius: 8px; }
+/* === ЭКРАН ПОБЕДЫ === */
+#croc-win-screen {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 15, 16, 0.85); display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 20; color: white; animation: fadeIn 0.3s ease;
+}
+.win-content { text-align: center; border: 2px solid var(--accent); padding: 30px; border-radius: 15px; background: var(--panel); box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+#win-word { font-size: 2.5rem; color: var(--accent); margin: 0 0 20px 0; text-transform: uppercase; letter-spacing: 2px; }
+.win-player { font-size: 1.2rem; margin: 10px 0; font-weight: bold; }
+.win-timer-block { margin-top: 20px; font-size: 1rem; color: #aaa; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
 .options-row { display: flex; gap: 15px; margin-top: 15px; }
 .word-btn { padding: 15px 30px; font-size: 1.2rem; }
 
