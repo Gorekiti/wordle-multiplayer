@@ -178,12 +178,16 @@ button:hover { filter: brightness(1.2); }
     border: none; /* Убираем бордер, если был */
 }
 
-#status-msg{
-    position:absolute;
-    top:25px;
-    left:50%;
-    transform:translateX(-50%);
-    margin:0;
+#status-msg {
+    position: relative; /* Убрали absolute, теперь текст не будет выпадать */
+    top: 0;
+    left: 0;
+    transform: none;
+    margin-bottom: 15px; /* Добавляем отступ вниз до холста */
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    width: 100%;
 }
 
 /* === ХОЛСТ: ФИКС ВЫСОТЫ И ИНСТРУМЕНТЫ СВЕРХУ === */
@@ -191,13 +195,21 @@ button:hover { filter: brightness(1.2); }
     max-width: 950px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    background: #1a1a1a; /* Цвет фона под тулбар */
+    background: #1a1a1a;
     border-radius: 12px;
-    overflow: hidden; /* Важно: обрезает края холста и тулбара под общее скругление */
-    position: relative; /* Важно: чтобы таймер встал в угол именно холста */
+    overflow: hidden; /* Важно: делает общие скругления для панели и холста */
     box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-    /* Убрали padding, чтобы холст и панель прилипли к краям */
+    /* Убрали padding */
+}
+
+.toolbar {
+    width: 100%;
+    background: #1a1a1a;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    /* Убрали margin и border-radius */
 }
 
 canvas {
@@ -205,17 +217,7 @@ canvas {
     width: 900px;
     height: 500px;
     max-width: 100%;
-    /* Убрали border-radius и отдельную тень, они теперь управляются через .canvas-wrapper */
-}
-
-.toolbar {
-    width: 100%;
-    background: #1a1a1a;
-    padding: 10px 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    /* Убрали margin-top и border-radius, чтобы прилипло к холсту */
+    /* Убрали border-radius и тени у самого холста */
 }
 
 .color-swatch.active { 
