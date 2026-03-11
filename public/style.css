@@ -167,15 +167,13 @@ button:hover { filter: brightness(1.2); }
 /* === ХОЛСТ: ФИКС ВЫСОТЫ И ИНСТРУМЕНТЫ СВЕРХУ === */
 .canvas-wrapper { 
     position: relative; 
-    background: white; 
-    border-radius: 12px; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+    background: #1e1e20; /* Темный фон панели из фото */
+    border-radius: 15px; 
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6); 
     display: flex; 
     flex-direction: column; 
     overflow: hidden; 
-    
-    /* Важно для отсутствия скролла: */
-    max-height: 70vh; 
+    max-height: 75vh; /* Чуть увеличим, чтобы холст был крупнее */
     width: auto;
     aspect-ratio: 3/2;
 }
@@ -188,16 +186,30 @@ canvas {
 }
 
 .toolbar { 
-    background: #1a1a1b; 
-    padding: 8px 15px; 
+    background: #1e1e20; 
+    padding: 12px 20px; 
     display: flex; 
-    gap: 15px; 
+    gap: 20px; 
     align-items: center; 
     justify-content: space-between; 
-    border-bottom: 1px solid var(--border); 
+    border-bottom: none; /* Убираем разделительную линию */
     flex-wrap: nowrap; 
 }
 
+/* Стили для кружочков цветов */
+.color-swatch { 
+    width: 22px; 
+    height: 22px; 
+    border-radius: 50%; 
+    cursor: pointer; 
+    border: 2px solid rgba(255,255,255,0.1); 
+    transition: transform 0.2s;
+}
+
+.color-swatch.active { 
+    border: 2px solid white; 
+    transform: scale(1.2); 
+}
 .palette { display: flex; gap: 8px; }
 
 .color-swatch { 
@@ -220,12 +232,19 @@ canvas {
 }
 
 .tool-btn { 
-    background: var(--bg); 
+    background: #2d2d30; /* Темный фон кнопок */
     border: 1px solid var(--border); 
-    padding: 4px 10px; 
-    border-radius: 6px; 
-    font-size: 0.75rem; 
+    padding: 8px 16px; 
+    border-radius: 10px; 
+    font-size: 0.85rem; 
     color: white;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.tool-btn:hover {
+    background: #3a3a3c;
 }
 
 /* === МОДАЛКА ВЫБОРА СЛОВА === */
