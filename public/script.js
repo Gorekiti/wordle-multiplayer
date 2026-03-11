@@ -2,23 +2,21 @@ const socket = io();
 let myMode = '', roomId = '', myNick = localStorage.getItem('wordle-nick') || '', isSetter = false;
 let currentWordLen = 0, currentAttempt = 0;
 
-// Canvas setup
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let drawing = false;
+let currentColor = '#000000';
 
-// Поддержка планшетов
 canvas.addEventListener('pointerdown', (e) => {
     if (!isSetter || myMode !== 'croc') return;
-    drawing = true;
-    ctx.beginPath();
-    const pos = getPos(e);
-    ctx.moveTo(pos.x, pos.y);
+    drawing = true; ctx.beginPath();
+    const pos = getPos(e); ctx.moveTo(pos.x, pos.y);
 });
 canvas.addEventListener('pointermove', (e) => {
     if (!drawing) return;
     const pos = getPos(e);
-    const data = { x: pos.x, y: pos.y, color: document.getElementById('color-picker').value, size: document.getElementById('size-picker').value };
+    const size = document.getElementById('size-picker').value;
+    const data = { x: pos.x, y: pos.y, color: currentColor, size: size };
     socket.emit('drawing', data);
     drawLocal(data);
 });
@@ -33,20 +31,29 @@ function getPos(e) {
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
 }
 
-// Таймер
+// Управление палитрой
+function setColor(color, el) {
+    currentColor = color;
+    document.querySelectorAll('.color-swatch, .tool-btn').forEach(btn => btn.classList.remove('active'));
+    if (el) el.classList.add('active');
+}
+function setEraser(el) {
+    currentColor = '#ffffff'; // Цвет фона
+    document.querySelectorAll('.color-swatch, .tool-btn').forEach(btn => btn.classList.remove('active'));
+    el.classList.add('active');
+}
+
 socket.on('timer', (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const mins = Math.floor(seconds / 60); const secs = seconds % 60;
     document.getElementById('timer-display').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 });
 
-// Лобби
 if (myNick) document.getElementById('nick-input').value = myNick;
 
 function openLobby(mode) {
     myMode = mode;
     myNick = document.getElementById('nick-input').value.trim();
-    if (!myNick) return showNotify("Введите ваш никнейм!", "error");
+    if (!myNick) return showNotify("Введите ник!", "error");
     localStorage.setItem('wordle-nick', myNick);
     document.getElementById('auth-screen').classList.add('hidden');
     document.getElementById('lobby-screen').classList.remove('hidden');
@@ -57,10 +64,10 @@ socket.on('roomsList', (rooms) => {
     const list = document.getElementById('rooms-list');
     list.innerHTML = rooms.filter(r => r.mode === myMode).map(r => `
         <div class="room-card">
-            <h3>Комната #${r.room_id}</h3>
+            <h3>Создатель: ${r.creator_nick || 'Неизвестно'}</h3>
             <p>Игроков: ${r.currentCount}/${r.max_players}</p>
             <button ${r.currentCount >= r.max_players ? 'disabled style="background:#3a3a3c"' : ''} onclick="join('${r.room_id}')">
-                ${r.currentCount >= r.max_players ? 'Заполнено' : 'Войти в игру'}
+                Войти в игру
             </button>
         </div>
     `).join('');
@@ -76,29 +83,29 @@ function join(id) {
 function createRoom() { socket.emit('createRoom', { mode: myMode, nickname: myNick }); }
 socket.on('roomCreated', (id) => join(id));
 
-// Обновление комнаты
-socket.on('roomUpdate', ({ session, leaders, activePlayers }) => {
-    document.getElementById('leaderboard').innerHTML = leaders.map(p => `<li><span>${p.nickname}</span> <b>${p.score}</b></li>`).join('');
+socket.on('roomUpdate', ({ session, leaders, activePlayers, maxPlayers }) => {
+    document.getElementById('leaderboard').innerHTML = leaders.map(p => `<li>${p.nickname}: <b>${p.score}</b></li>`).join('');
     document.getElementById('player-list').innerHTML = activePlayers.map(name => `<li>${name}${name === myNick ? " (Вы)" : ""}</li>`).join('');
     
+    // Реал-тайм счетчик игроков
+    document.getElementById('player-count-badge').innerText = `${activePlayers.length}/${maxPlayers}`;
+
     if (session.mode === 'wordle') document.getElementById('wordle-ui').classList.remove('hidden');
     if (session.mode === 'croc') document.getElementById('croc-ui').classList.remove('hidden');
 });
 
 socket.on('gameStart', ({ setter, guesser }) => {
-    resetUI();
-    isSetter = (myNick === setter);
-    document.getElementById('status-msg').innerText = isSetter ? `Загадай слово для ${guesser}` : `Ждем слово от ${setter}`;
+    resetUI(); isSetter = (myNick === setter);
+    document.getElementById('status-msg').innerText = isSetter ? `Загадай для ${guesser}` : `Ждем ${setter}...`;
     if (isSetter) document.getElementById('setup-zone').classList.remove('hidden');
 });
 
 socket.on('crocSelection', ({ setter, options }) => {
-    resetUI();
-    isSetter = (myNick === setter);
+    resetUI(); isSetter = (myNick === setter);
     if (isSetter) {
         document.getElementById('word-picker').classList.remove('hidden');
-        document.getElementById('word-options').innerHTML = options.map(w => `<button onclick="chooseWord('${w}')">${w}</button>`).join('');
-        document.getElementById('status-msg').innerText = "Ваша очередь рисовать!";
+        document.getElementById('word-options').innerHTML = options.map(w => `<button class="word-btn" onclick="chooseWord('${w}')">${w}</button>`).join('');
+        document.getElementById('status-msg').innerText = "Выбирай слово!";
     } else {
         document.getElementById('status-msg').innerText = `${setter} выбирает слово...`;
     }
@@ -106,46 +113,47 @@ socket.on('crocSelection', ({ setter, options }) => {
 
 function chooseWord(word) {
     document.getElementById('word-picker').classList.add('hidden');
-    document.getElementById('croc-tools').classList.remove('hidden');
-    document.getElementById('status-msg').innerText = `Рисуйте слово: ${word}`;
+    document.getElementById('status-msg').innerText = `Рисуй: ${word}`;
     socket.emit('wordChosen', word);
 }
 
 socket.on('gameStarted', ({ wordLength }) => {
-    if (!isSetter) document.getElementById('status-msg').innerText = `Угадайте слово (${wordLength} букв)`;
-    document.getElementById('croc-tools').classList.toggle('hidden', !isSetter);
+    if (!isSetter) document.getElementById('status-msg').innerText = `Угадай (${wordLength} букв)`;
 });
 
-// Чат
 document.getElementById('chat-input').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') { 
-        if (e.target.value.trim()) socket.emit('chatMessage', e.target.value); 
-        e.target.value = ''; 
-    }
+    if (e.key === 'Enter' && e.target.value.trim()) { socket.emit('chatMessage', e.target.value); e.target.value = ''; }
 });
 
 socket.on('chatMessage', ({ nick, text, type }) => {
     const box = document.getElementById('chat-box');
     const msg = document.createElement('div');
-    msg.className = `chat-msg ${type || ''}`;
-    msg.innerHTML = `<b>${nick}:</b> ${text}`;
-    box.appendChild(msg);
-    box.scrollTop = box.scrollHeight;
+    
+    // Обработка системных сообщений
+    if (type === 'system-join' || type === 'system-info') {
+        msg.className = 'chat-sys';
+        msg.innerHTML = `<i>${text}</i>`;
+    } else if (type === 'system-win') {
+        msg.className = 'chat-sys win';
+        msg.innerHTML = `<b>${text}</b>`;
+    } else {
+        msg.className = 'chat-msg';
+        msg.innerHTML = `<b>${nick}:</b> ${text}`;
+    }
+    
+    box.appendChild(msg); box.scrollTop = box.scrollHeight;
 });
 
-// Прочее
 function copyRoomLink() {
-    const url = window.location.href.split('?')[0] + '?room=' + roomId;
+    const url = window.location.origin + '?room=' + roomId;
     navigator.clipboard.writeText(url).then(() => showNotify("Ссылка скопирована!", "success"));
 }
 
 function showNotify(text, type) {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerText = text;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    toast.className = `toast ${type}`; toast.innerText = text;
+    container.appendChild(toast); setTimeout(() => toast.remove(), 3000);
 }
 
 socket.on('drawing', (data) => drawLocal(data));
@@ -158,9 +166,8 @@ function resetUI() {
     document.getElementById('setup-zone').classList.add('hidden');
     document.getElementById('input-wrapper').classList.add('hidden');
     document.getElementById('word-picker').classList.add('hidden');
-    document.getElementById('croc-tools').classList.add('hidden');
     document.getElementById('result-display').classList.add('hidden');
-    document.getElementById('status-msg').innerText = "Приготовьтесь...";
+    document.getElementById('status-msg').innerText = "Подготовка...";
 }
 
 // Wordle Logic
@@ -175,12 +182,9 @@ socket.on('wordReady', ({ length }) => {
     initGrid(length);
 });
 function initGrid(len) {
-    currentAttempt = 0;
-    const grid = document.getElementById('grid');
-    grid.innerHTML = "";
+    currentAttempt = 0; const grid = document.getElementById('grid'); grid.innerHTML = "";
     for (let i = 0; i < 6; i++) {
-        const row = document.createElement('div');
-        row.className = 'row';
+        const row = document.createElement('div'); row.className = 'row';
         for (let j = 0; j < len; j++) row.innerHTML += `<div class="tile"></div>`;
         grid.appendChild(row);
     }
@@ -201,6 +205,6 @@ socket.on('guessResult', ({ result, guess }) => {
     }
 });
 socket.on('gameOver', ({ winner, word }) => {
-    document.getElementById('result-display').innerText = `Раунд окончен. Слово: ${word}`;
-    document.getElementById('result-display').classList.remove('hidden');
+    const res = document.getElementById('result-display');
+    res.innerText = `Слово: ${word}`; res.classList.remove('hidden');
 });

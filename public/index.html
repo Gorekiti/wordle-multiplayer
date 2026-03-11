@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Hub 2026</title>
+    <title>Game Hub</title>
     <link rel="stylesheet" href="style.css">
     <script src="/socket.io/socket.io.js"></script>
 </head>
@@ -12,7 +12,7 @@
 
     <div id="auth-screen" class="screen">
         <div class="box main-auth">
-            <h1 class="logo-text">GAME<span>HUB</span></h1>
+            <h1 class="logo-text">Game<span>Hub</span></h1>
             <input type="text" id="nick-input" placeholder="Введите ваш ник...">
             <div class="mode-select">
                 <button class="mode-btn wordle" onclick="openLobby('wordle')">Wordle 1x1</button>
@@ -26,7 +26,7 @@
             <header class="lobby-header">
                 <button class="icon-btn" onclick="goHome()">🏠</button>
                 <h2 id="lobby-title">Лобби</h2>
-                <button class="create-btn" onclick="createRoom()">+ Создать комнату</button>
+                <button class="create-btn" onclick="createRoom()">+ Создать</button>
             </header>
             <div id="rooms-list" class="rooms-grid"></div>
         </div>
@@ -35,12 +35,10 @@
     <div id="game-screen" class="screen hidden">
         <div class="app-container">
             <aside class="side-panel left">
-                <div class="panel-header">
-                    <button class="home-link" onclick="goHome()">🏠 На главную</button>
-                </div>
+                <button class="home-btn" onclick="goHome()">🏠 На главную</button>
                 <div class="stat-section">
-                    <h3>🏆 Топ игроков</h3>
-                    <ul id="leaderboard" class="custom-list"></ul>
+                    <h3>🏆 Рейтинг комнаты</h3>
+                    <ul id="leaderboard" class="scroll-list"></ul>
                 </div>
             </aside>
 
@@ -52,25 +50,32 @@
                 <div id="wordle-ui" class="hidden game-box">
                     <div id="grid"></div>
                     <div id="setup-zone" class="hidden input-group">
-                        <input type="text" id="secret-word" placeholder="Загадайте слово...">
-                        <button onclick="sendSecret()">Загадать</button>
+                        <input type="text" id="secret-word" placeholder="Загадай...">
+                        <button onclick="sendSecret()">OK</button>
                     </div>
                     <div id="input-wrapper" class="hidden input-group">
-                        <input type="text" id="guess-input" placeholder="Ваша догадка...">
+                        <input type="text" id="guess-input" placeholder="Догадка...">
                         <button onclick="sendGuess()">Ввод</button>
                     </div>
                 </div>
 
                 <div id="croc-ui" class="hidden game-box">
                     <div id="word-picker" class="hidden modal">
-                        <h3>Выберите слово:</h3>
-                        <div id="word-options" class="options-grid"></div>
+                        <h3>Выбери слово:</h3>
+                        <div id="word-options" class="options-row"></div>
                     </div>
                     <div class="canvas-wrapper">
                         <canvas id="canvas" width="600" height="400"></canvas>
-                        <div id="croc-tools" class="hidden toolbar">
-                            <input type="color" id="color-picker" title="Цвет">
-                            <input type="range" id="size-picker" min="1" max="25" value="5" title="Размер">
+                        <div id="croc-tools" class="toolbar">
+                            <div class="palette">
+                                <div class="color-swatch active" style="background:#000000" onclick="setColor('#000000', this)"></div>
+                                <div class="color-swatch" style="background:#e74c3c" onclick="setColor('#e74c3c', this)"></div>
+                                <div class="color-swatch" style="background:#3498db" onclick="setColor('#3498db', this)"></div>
+                                <div class="color-swatch" style="background:#2ecc71" onclick="setColor('#2ecc71', this)"></div>
+                                <div class="color-swatch" style="background:#f1c40f" onclick="setColor('#f1c40f', this)"></div>
+                            </div>
+                            <input type="range" id="size-picker" min="1" max="25" value="5">
+                            <button class="tool-btn" onclick="setEraser(this)">🧽 Ластик</button>
                             <button class="tool-btn" onclick="clearCanvas()">🗑 Сброс</button>
                         </div>
                     </div>
@@ -79,21 +84,20 @@
 
             <aside class="side-panel right">
                 <div class="players-section">
-                    <h3>👥 Игроки</h3>
-                    <ul id="player-list" class="player-chips"></ul>
+                    <div class="flex-header">
+                        <h3>👥 Игроки</h3>
+                        <span id="player-count-badge" class="badge">0/0</span>
+                    </div>
+                    <ul id="player-list" class="scroll-list player-chips"></ul>
                 </div>
                 
                 <div class="chat-section">
-                    <h3>💬 Чат комнаты</h3>
-                    <div id="chat-box" class="scroll-box"></div>
-                    <div class="chat-controls">
-                        <input type="text" id="chat-input" placeholder="Сообщение...">
-                    </div>
+                    <h3>💬 Чат</h3>
+                    <div id="chat-box"></div>
+                    <input type="text" id="chat-input" placeholder="Сообщение...">
                 </div>
 
-                <div class="invite-section">
-                    <button class="invite-btn" onclick="copyRoomLink()">🔗 Копировать ссылку</button>
-                </div>
+                <button class="invite-btn" onclick="copyRoomLink()">🔗 Копировать ссылку</button>
             </aside>
         </div>
     </div>

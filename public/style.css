@@ -1,59 +1,62 @@
-:root {
-    --bg: #0f0f10;
-    --panel: #161618;
-    --accent: #538d4e;
-    --text: #ffffff;
-    --border: #2d2d30;
-    --shadow: 0 8px 32px rgba(0,0,0,0.4);
-}
-
-body { background: var(--bg); color: var(--text); font-family: 'Inter', 'Segoe UI', sans-serif; margin: 0; overflow: hidden; }
+:root { --bg: #0f0f10; --panel: #161618; --accent: #538d4e; --border: #2d2d30; }
+body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; }
 .hidden { display: none !important; }
 
-/* Экраны */
 .screen { height: 100vh; display: flex; align-items: center; justify-content: center; }
-.box { background: var(--panel); padding: 40px; border-radius: 20px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-.logo-text { font-size: 3rem; margin-bottom: 30px; }
+.box { background: var(--panel); padding: 40px; border-radius: 20px; text-align: center; border: 1px solid var(--border); }
 .logo-text span { color: var(--accent); }
 
-/* Лобби */
-.lobby-container { width: 90%; max-width: 1000px; height: 80vh; background: var(--panel); border-radius: 20px; padding: 30px; }
-.rooms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; overflow-y: auto; height: 100%; }
-.room-card { background: var(--bg); border: 1px solid var(--border); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 15px; }
+.app-container { display: grid; grid-template-columns: 280px 1fr 320px; height: 100vh; }
+.side-panel { background: var(--panel); border: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
 
-/* Игровая сетка */
-.app-container { display: grid; grid-template-columns: 280px 1fr 320px; height: 100vh; width: 100vw; }
-.side-panel { background: var(--panel); border-left: 1px solid var(--border); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; overflow: hidden; }
+/* Списки с прокруткой */
+.stat-section, .players-section { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.scroll-list { flex: 1; overflow-y: auto; padding-right: 5px; list-style: none; padding-left: 0; margin: 0; }
+.scroll-list::-webkit-scrollbar { width: 5px; }
+.scroll-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+.scroll-list li { background: var(--bg); margin-bottom: 8px; padding: 10px; border-radius: 8px; border: 1px solid var(--border); }
+
+/* Заголовки со счетчиками */
+.flex-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.badge { background: var(--accent); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
 
 /* Чат */
-.chat-section { flex-grow: 1; display: flex; flex-direction: column; margin: 20px 0; min-height: 0; }
-.scroll-box { flex-grow: 1; background: var(--bg); border-radius: 10px; padding: 10px; overflow-y: auto; font-size: 0.9rem; border: 1px solid var(--border); margin-bottom: 10px; }
-.scroll-box::-webkit-scrollbar { width: 6px; }
-.scroll-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+.chat-section { flex: 1.5; display: flex; flex-direction: column; margin: 15px 0; min-height: 0; }
+#chat-box { flex: 1; background: var(--bg); padding: 10px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; }
+.chat-sys { color: #888; font-size: 0.9em; margin-bottom: 5px; text-align: center; }
+.chat-sys.win { color: var(--accent); font-size: 1em; }
+.chat-msg { margin-bottom: 5px; word-break: break-word; }
 
-/* Таймер */
-.timer-bar { font-size: 2rem; font-weight: bold; color: var(--accent); background: rgba(83, 141, 78, 0.1); padding: 5px 20px; border-radius: 30px; margin-bottom: 20px; }
+.timer-bar { font-size: 2rem; color: var(--accent); background: rgba(83,141,78,0.1); padding: 10px 30px; border-radius: 40px; margin-bottom: 20px; font-weight: bold; }
 
-/* Кнопки и инпуты */
-input { background: var(--bg); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none; }
-button { background: var(--accent); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-button:hover { filter: brightness(1.2); transform: translateY(-1px); }
-.invite-btn { width: 100%; background: #3a3a3c; }
+input { background: var(--bg); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; }
+button { background: var(--accent); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
-/* Canvas */
-.canvas-wrapper { position: relative; background: white; border-radius: 10px; overflow: hidden; box-shadow: var(--shadow); }
-canvas { display: block; cursor: crosshair; touch-action: none; }
-.toolbar { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: #1a1a1b; padding: 10px; border-radius: 10px; display: flex; gap: 15px; align-items: center; }
+.rooms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; overflow-y: auto; max-height: 60vh; padding: 10px; }
+.room-card { background: var(--bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between; }
 
-/* Wordle Grid */
-#grid { display: grid; gap: 8px; margin-bottom: 20px; }
+/* Canvas и инструменты */
+.canvas-wrapper { position: relative; background: white; border-radius: 8px; }
+canvas { touch-action: none; display: block; }
+.toolbar { background: #1a1a1b; padding: 10px; border-radius: 0 0 8px 8px; display: flex; gap: 15px; align-items: center; justify-content: center; border-top: 1px solid var(--border); }
+.palette { display: flex; gap: 5px; }
+.color-swatch { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+.color-swatch.active { border: 2px solid white; transform: scale(1.1); }
+.tool-btn { background: var(--bg); border: 1px solid var(--border); padding: 5px 10px; }
+.tool-btn.active { border-color: white; }
+
+/* Модалка выбора слова */
+.modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; border-radius: 8px; }
+.options-row { display: flex; gap: 15px; }
+.word-btn { padding: 15px 30px; font-size: 1.2rem; }
+
+#grid { display: grid; gap: 8px; justify-content: center; }
 .row { display: flex; gap: 8px; }
-.tile { width: 50px; height: 50px; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; text-transform: uppercase; border-radius: 4px; }
+.tile { width: 50px; height: 50px; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.4rem; }
 .correct { background: var(--accent); border-color: var(--accent); }
 .present { background: #b59f3b; border-color: #b59f3b; }
 .absent { background: #3a3a3c; border-color: #3a3a3c; }
 
-/* Тосты */
 #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-.toast { padding: 15px 25px; border-radius: 8px; background: var(--panel); margin-bottom: 10px; border-left: 5px solid var(--accent); animation: slideIn 0.3s ease; }
-@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+.toast { padding: 15px 25px; background: var(--panel); border-left: 5px solid var(--accent); margin-bottom: 10px; animation: slideIn 0.3s ease; }
+@keyframes slideIn { from { transform: translateX(100%); } }
