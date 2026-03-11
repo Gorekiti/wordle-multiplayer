@@ -63,15 +63,28 @@ body {
     margin-bottom: 15px;
 }
 
-.game-core { 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    justify-content: center; /* Центрируем холст по вертикали */
-    padding: 10px 15px; 
-    position: relative; 
+.side-panel {
+    background: #121214;
+    border-right: 1px solid var(--border);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.side-panel.right {
+    border-right: none;
+    border-left: 1px solid var(--border);
+}
+
+.game-core {
+    background: #0f0f10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 15px;
+    position: relative;
     height: 100%;
-    overflow: hidden; 
 }
 
 .game-box { 
@@ -169,16 +182,24 @@ button:hover { filter: brightness(1.2); }
 /* В обертке холста меняем порядок */
 .canvas-wrapper {
     display: flex;
-    flex-direction: column; /* Холст сверху, тулбар снизу */
-    background: #1a1a1a; /* Цвет рамки вокруг холста */
-    border: 4px solid #1a1a1a;
-    border-radius: 10px;
+    flex-direction: column;
+    background: #111;
+    border-radius: 12px;
+    padding: 10px;
+}
+
+canvas {
+    background: white;
+    border-radius: 6px;
 }
 
 .toolbar {
-    order: 2; /* Гарантируем, что тулбар внизу */
-    background: #1a1a1a; 
-    padding: 10px 15px;
+    order: 2;
+    background: #111;
+    border-top: 1px solid var(--border);
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
     justify-content: space-between;
 }
 
@@ -192,13 +213,12 @@ button:hover { filter: brightness(1.2); }
 }
 
 /* Стили для кружочков цветов */
-.color-swatch { 
-    width: 22px; 
-    height: 22px; 
-    border-radius: 50%; 
-    cursor: pointer; 
-    border: 2px solid rgba(255,255,255,0.1); 
-    transition: transform 0.2s;
+.color-swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
 }
 
 .color-swatch.active { 
@@ -226,16 +246,16 @@ button:hover { filter: brightness(1.2); }
     cursor: pointer; 
 }
 
-.tool-btn { 
-    background: #2d2d30; /* Темный фон кнопок */
-    border: 1px solid var(--border); 
-    padding: 8px 16px; 
-    border-radius: 10px; 
-    font-size: 0.85rem; 
-    color: white;
+.tool-btn {
+    background: #2a2a2c;
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #ddd;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
 }
 
 .tool-btn:hover {
