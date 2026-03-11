@@ -63,8 +63,8 @@ async function broadcastRoomsList() {
         const { data: rooms, error } = await supabase.from('game_rooms').select('*').order('created_at', { ascending: false });
         
         if (error) {
-            console.error("Ошибка БД при загрузке лобби:", error.message);
-            io.emit('roomsList', []); // Отправляем пустой массив, чтобы клиент не завис
+            console.error("Ошибка БД:", error.message);
+            io.emit('roomsList', []); // Важно: отправляем пустой массив
             return;
         }
         
@@ -75,7 +75,6 @@ async function broadcastRoomsList() {
         
         io.emit('roomsList', list);
     } catch (err) {
-        console.error("Критическая ошибка лобби:", err.message);
         io.emit('roomsList', []);
     }
 }
@@ -83,11 +82,12 @@ async function broadcastRoomsList() {
 // === Очистка "мертвых" комнат при запуске сервера ===
 async function cleanupOldRooms() {
     try {
+        // Удаляем записи, где room_id не пустой
         const { error } = await supabase.from('game_rooms').delete().not('room_id', 'is', null);
         if (error) throw error;
-        console.log("🧹 База комнат успешно очищена от старых сессий");
+        console.log("🧹 База комнат успешно очищена");
     } catch (err) {
-        console.error("Ошибка при очистке старых комнат:", err.message);
+        console.error("Ошибка при очистке:", err.message);
     }
 }
 cleanupOldRooms();
@@ -277,6 +277,7 @@ function startTimer(roomId, onTimeout) {
     stopTimer(roomId);
     let timeLeft = ROUND_TIME;
     io.to(roomId).emit('timer', timeLeft);
+    
     roomTimers[roomId] = setInterval(() => {
         timeLeft--;
         io.to(roomId).emit('timer', timeLeft);

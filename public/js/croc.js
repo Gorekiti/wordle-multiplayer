@@ -78,7 +78,7 @@ socket.on('crocWin', ({ word, setter, winner }) => {
         guesserBlock.classList.add('hidden');
     }
 
-    // 🔓 Возвращаем чат всем игрокам после раунда
+    // 🔓 Возвращаем художнику возможность писать после раунда
     const chatInput = document.getElementById('chat-input');
     chatInput.disabled = false;
     chatInput.placeholder = "Сообщение...";
@@ -93,7 +93,7 @@ socket.on('crocWin', ({ word, setter, winner }) => {
     }, 1000);
 });
 
-// === ВЫБОР СЛОВА (МОДАЛКА) И БЛОКИРОВКА ВВОДА ===
+// === ВЫБОР СЛОВА (ЦЕНТРАЛЬНАЯ МОДАЛКА) И БЛОКИРОВКА ВВОДА ===
 socket.on('crocSelection', ({ setter, options }) => {
     resetUI(); 
     
@@ -101,17 +101,17 @@ socket.on('crocSelection', ({ setter, options }) => {
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
 
     isSetter = (myNick === setter);
-    currentSetter = setter; // Сохраняем, кто именно сейчас рисует
+    currentSetter = setter; // Запоминаем, кто рисует
     const chatInput = document.getElementById('chat-input');
 
     if (isSetter) {
-        // Показываем центрированную модалку из index.html
+        // Показываем центрированную модалку из HTML
         const picker = document.getElementById('word-picker');
         picker.classList.remove('hidden');
         document.getElementById('word-options').innerHTML = options.map(w => `<button class="word-btn" onclick="chooseWord('${w}')">${w}</button>`).join('');
         document.getElementById('status-msg').innerText = "Выбирай слово!";
         
-        // 🔒 Художник видит чат, но не может в него писать
+        // 🔒 Блокируем чат для художника
         chatInput.disabled = true;
         chatInput.placeholder = "Художник не может писать...";
         chatInput.style.opacity = "0.5";
@@ -134,7 +134,7 @@ function chooseWord(word) {
 // === НАЧАЛО ИГРЫ (ОБНОВЛЕННЫЙ СТАТУС) ===
 socket.on('gameStarted', () => {
     if (!isSetter && myMode === 'croc') {
-        // Используем сохраненное имя художника и убираем подсказку про буквы
+        // Выводим имя художника без подсказок
         document.getElementById('status-msg').innerText = `${currentSetter} рисует`; 
     }
 });
