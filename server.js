@@ -19,7 +19,7 @@ let roomChats = {};
 
 const ROUND_TIME = 80; 
 
-// === ОГРОМНЫЙ СЛОВАРЬ (300 СЛОВ) ===
+// === ТВОЙ ПОЛНЫЙ СЛОВАРЬ (300 СЛОВ) ===
 const CROC_WORDS = [
     'люди', 'семья', 'музыка', 'идея', 'видео', 'страна', 'фильм', 'парень', 'девушка', 'писательство', 
     'цель', 'ночь', 'химия', 'местоположение', 'математика', 'дерево', 'президент', 'клетка', 'озеро', 
@@ -60,11 +60,11 @@ const CROC_WORDS = [
 
 async function broadcastRoomsList() {
     try {
-        // Мы возвращаем чтение комнат из БД. Без RLS это будет работать безупречно.
         const { data: rooms, error } = await supabase.from('game_rooms').select('*').order('created_at', { ascending: false });
         
         if (error) {
             console.error("Ошибка БД при загрузке лобби:", error.message);
+            io.emit('roomsList', []); // Отправляем пустой массив, чтобы клиент не завис
             return;
         }
         
@@ -76,13 +76,13 @@ async function broadcastRoomsList() {
         io.emit('roomsList', list);
     } catch (err) {
         console.error("Критическая ошибка лобби:", err.message);
+        io.emit('roomsList', []);
     }
 }
 
 // === Очистка "мертвых" комнат при запуске сервера ===
 async function cleanupOldRooms() {
     try {
-        // Удаляем все комнаты, так как при старте сервера в них точно никого нет
         const { error } = await supabase.from('game_rooms').delete().not('room_id', 'is', null);
         if (error) throw error;
         console.log("🧹 База комнат успешно очищена от старых сессий");
@@ -196,7 +196,7 @@ io.on('connection', (socket) => {
 
     socket.on('wordChosen', async (word) => {
         await supabase.from('game_rooms').update({ secret_word: word, status: 'playing' }).eq('room_id', socket.roomId);
-        io.to(socket.roomId).emit('gameStarted', { wordLength: word.length });
+        io.to(socket.roomId).emit('gameStarted');
         
         startTimer(socket.roomId, async () => {
             const { data: r } = await supabase.from('game_rooms').select('setter_nick').eq('room_id', socket.roomId).single();

@@ -93,7 +93,7 @@ socket.on('crocWin', ({ word, setter, winner }) => {
     }, 1000);
 });
 
-// === ВЫБОР СЛОВА И БЛОКИРОВКА ВВОДА ===
+// === ВЫБОР СЛОВА (МОДАЛКА) И БЛОКИРОВКА ВВОДА ===
 socket.on('crocSelection', ({ setter, options }) => {
     resetUI(); 
     
@@ -105,7 +105,9 @@ socket.on('crocSelection', ({ setter, options }) => {
     const chatInput = document.getElementById('chat-input');
 
     if (isSetter) {
-        document.getElementById('word-picker').classList.remove('hidden');
+        // Показываем центрированную модалку из index.html
+        const picker = document.getElementById('word-picker');
+        picker.classList.remove('hidden');
         document.getElementById('word-options').innerHTML = options.map(w => `<button class="word-btn" onclick="chooseWord('${w}')">${w}</button>`).join('');
         document.getElementById('status-msg').innerText = "Выбирай слово!";
         
@@ -130,7 +132,7 @@ function chooseWord(word) {
 }
 
 // === НАЧАЛО ИГРЫ (ОБНОВЛЕННЫЙ СТАТУС) ===
-socket.on('gameStarted', ({ wordLength }) => {
+socket.on('gameStarted', () => {
     if (!isSetter && myMode === 'croc') {
         // Используем сохраненное имя художника и убираем подсказку про буквы
         document.getElementById('status-msg').innerText = `${currentSetter} рисует`; 

@@ -5,12 +5,23 @@
     --border: #2d2d30; 
 }
 
+/* === ГАРМОНИЧНЫЙ СКРОЛЛБАР === */
+* { 
+    scrollbar-width: thin; 
+    scrollbar-color: var(--border) transparent; 
+}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #3d3d42; }
+
 body { 
     background: var(--bg); 
     color: white; 
     font-family: 'Inter', sans-serif; 
     margin: 0; 
     overflow: hidden; 
+    height: 100vh;
 }
 
 .hidden { display: none !important; }
@@ -55,10 +66,9 @@ body {
     flex-direction: column; 
     align-items: center; 
     justify-content: flex-start; 
-    padding: 20px 15px; 
+    padding: 10px 15px; /* Уменьшил для компактности */
     position: relative; 
-    overflow-y: auto; 
-    overflow-x: hidden; 
+    overflow: hidden; /* Убрал скролл для компактности */
 }
 
 .game-box { 
@@ -135,12 +145,12 @@ button {
 button:hover { filter: brightness(1.2); }
 
 .timer-bar { 
-    font-size: 1.4rem; 
+    font-size: 1.1rem; /* Сделал компактнее */
     color: var(--accent); 
     background: rgba(83,141,78,0.1); 
-    padding: 5px 20px; 
+    padding: 4px 15px; 
     border-radius: 40px; 
-    margin-bottom: 10px; 
+    margin-bottom: 5px; 
     font-weight: bold; 
     border: 1px solid rgba(83,141,78,0.3); 
 }
@@ -150,7 +160,7 @@ button:hover { filter: brightness(1.2); }
     display: grid; 
     gap: 12px; 
     justify-content: center; 
-    margin: 20px 0;
+    margin: 10px 0; /* Уменьшил для компактности */
 }
 
 .row { 
@@ -196,8 +206,8 @@ button:hover { filter: brightness(1.2); }
     background: white; 
     border-radius: 12px; 
     box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-    width: 98%; 
-    max-width: 1000px; 
+    width: 100%; 
+    max-width: 850px; 
     display: flex; 
     flex-direction: column; 
     overflow: hidden; 
@@ -213,23 +223,23 @@ canvas {
 
 .toolbar { 
     background: #1a1a1b; 
-    padding: 10px 15px; 
+    padding: 8px 15px; 
     display: flex; 
     gap: 15px; 
     align-items: center; 
     justify-content: space-between; 
     border-top: 1px solid var(--border); 
-    flex-wrap: nowrap; /* Инструменты всегда в одну линию */
+    flex-wrap: nowrap; 
 }
 
 .palette { 
     display: flex; 
-    gap: 8px; /* Цвета снова в ряд */
+    gap: 8px; 
 }
 
 .color-swatch { 
-    width: 26px; 
-    height: 26px; 
+    width: 24px; 
+    height: 24px; 
     border-radius: 50%; 
     cursor: pointer; 
     border: 2px solid transparent; 
@@ -242,16 +252,16 @@ canvas {
 }
 
 #size-picker { 
-    width: 100px; 
+    width: 80px; 
     cursor: pointer; 
 }
 
 .tool-btn { 
     background: var(--bg); 
     border: 1px solid var(--border); 
-    padding: 8px 15px; 
+    padding: 6px 12px; 
     border-radius: 6px; 
-    font-size: 0.9rem; 
+    font-size: 0.85rem; 
     color: white;
 }
 
@@ -262,7 +272,7 @@ canvas {
     flex: 1.5; 
     display: flex; 
     flex-direction: column; 
-    margin: 15px 0; 
+    margin: 10px 0; 
     min-height: 0; 
 }
 
@@ -284,6 +294,16 @@ canvas {
     border: 1px solid var(--border); 
 }
 
+/* === ВЫБОР СЛОВА (ПОВЕРХ ВСЕГО) === */
+.modal { 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; 
+    z-index: 100; animation: fadeIn 0.2s ease;
+}
+.options-row { display: flex; gap: 15px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+.word-btn { padding: 15px 30px; font-size: 1.2rem; min-width: 140px; }
+
 /* === ЭКРАН ПОБЕДЫ === */
 #croc-win-screen {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -293,12 +313,33 @@ canvas {
 
 /* === АДАПТИВНОСТЬ === */
 @media (max-width: 850px) {
-    .app-container { display: flex; flex-direction: column; height: auto; }
+    body { overflow: hidden; }
+    .app-container { display: flex; flex-direction: column; height: 100vh; }
+    
     .side-panel.left { display: none; }
-    .side-panel.right { order: 2; border-top: 2px solid var(--accent); padding: 15px; }
-    .game-core { order: 1; padding: 10px 5px; }
-    .tile { width: 50px; height: 50px; font-size: 1.5rem; }
-    .toolbar { flex-wrap: wrap; justify-content: center; }
+    
+    /* Игроки выпадающим списком (Badge в углу) */
+    .players-section { 
+        position: absolute; top: 10px; right: 10px; z-index: 50; 
+        background: var(--panel); padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border);
+    }
+    .players-section h3 { display: none; }
+    #player-list { display: none; } /* Можно добавить toggle в JS для открытия списка */
+    
+    .game-core { order: 1; flex: none; height: 50vh; padding: 5px; }
+    .canvas-wrapper { aspect-ratio: 4/3; }
+    
+    .side-panel.right { 
+        order: 2; flex: 1; border-top: 2px solid var(--accent); padding: 15px; 
+        border-left: none; border-radius: 20px 20px 0 0;
+    }
+    
+    .chat-section { flex: 1; margin: 0; margin-bottom: 50px; }
+    #chat-input { position: fixed; bottom: 65px; left: 15px; width: calc(100% - 30px); }
+    .invite-btn { position: fixed; bottom: 10px; left: 15px; width: calc(100% - 30px); height: 45px; }
+
+    .tile { width: 45px; height: 45px; font-size: 1.4rem; }
+    .toolbar { flex-wrap: wrap; justify-content: center; gap: 8px; }
 }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
