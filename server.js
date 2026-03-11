@@ -15,9 +15,48 @@ let roomPlayers = {};
 let roomTimers = {}; 
 let roomScores = {}; 
 let roomLastSetter = {}; 
+let roomChats = {}; 
 
 const ROUND_TIME = 80; 
-const CROC_WORDS = ['Телефон', 'Борщ', 'Программист', 'Гитара', 'Космос', 'Крыса', 'Университет', 'Пицца', 'Дракон', 'Скейтборд', 'Машина', 'Собака', 'Дерево'];
+
+// === НОВЫЙ ОГРОМНЫЙ СЛОВАРЬ ===
+const CROC_WORDS = [
+    'люди', 'семья', 'музыка', 'идея', 'видео', 'страна', 'фильм', 'парень', 'девушка', 'писательство', 
+    'цель', 'ночь', 'химия', 'местоположение', 'математика', 'дерево', 'президент', 'клетка', 'озеро', 
+    'океан', 'кровь', 'вилка', 'нож', 'вращение', 'мим', 'высокий', 'орел', 'брекеты', 'солнечный свет', 
+    'меч', 'одеяло', 'макияж', 'олень', 'брак', 'мотоцикл', 'сад', 'пальцы ног', 'локоть', 'корзина', 
+    'значок', 'пузырь', 'доктор', 'воск', 'мед', 'песок', 'жук', 'ворон', 'солнцезащитные очки', 'календарь', 
+    'салат', 'солнце', 'тост', 'арахис', 'омар', 'леденец', 'тупик', 'спам', 'электронная почта', 'высокий стул', 
+    'хоккей', 'буррито', 'стетоскоп', 'рамка', 'упражнение на пресс', 'диван', 'марка', 'носок', 'гараж', 
+    'зеленый', 'точка', 'шарф', 'веб-камера', 'мусорное ведро', 'лазер', 'шланг', 'кошелек', 'сумочка', 
+    'перерыв', 'кольцо', 'текст', 'макароны', 'багаж', 'двухъярусная кровать', 'облако', 'цимбалы', 'бровь', 
+    'ресница', 'палец', 'воронка', 'река', 'плечо', 'червь', 'багель', 'воздушный корабль', 'часы', 
+    'перчатка', 'почта', 'тротуар', 'ворота', 'ведро', 'удочка', 'полотенце', 'замороженный десерт', 'желудок', 
+    'таракан', 'дикобраз', 'кобра', 'платье', 'дверная ручка', 'гладильная доска', 'бобер', 'крыло', 'ямочка', 
+    'бабочка', 'пила', 'язык', 'бутылка', 'груша', 'ковер', 'бумага', 'железная дорога', 'лед', 'сосна', 
+    'молоко', 'шторы', 'кирпич', 'корндог', 'тарелка', 'флагшток', 'дым', 'парусная лодка', 'клоп', 'ручка', 
+    'нож для открыток', 'такси', 'капот', 'дренаж', 'кузнец', 'вагонетка', 'зимняя рыбалка', 'положительный', 
+    'мозговой штурм', 'душа', 'карта', 'интернет', 'блютуз', 'usb', 'камины', 'пень', 'подсолнух', 
+    'морская лошадка', 'чемодан', 'овца', 'венок', 'цепь', 'лабиринт', 'флейта', 'светофор', 'серфборд', 
+    'принтер', 'ананас', 'сом', 'свадебный торт', 'телепорт', 'молния', 'дом-баржа', 'машина времени', 'CD', 
+    'ваза', 'выключатель', 'брецель', 'повязка на голову', 'цирк', 'объятие', 'степлер', 'арфа', 'сурок', 
+    'роликовые коньки', 'золотая рыбка', 'лестница', 'почтовый ящик', 'попкорн', 'масло', 'клей', 'колыбель', 
+    'американские горки', 'тачка', 'клоун', 'лампочка', 'кнопка', 'сильный', 'фотограф', 'шнурки', 'балет', 
+    'аплодировать', 'отскок', 'диск', 'рыбалка', 'батут', 'водопад', 'блинчики', 'песчаная яма', 'гудеть', 
+    'жилет', 'морковь', 'стрекоза', 'индюк', 'угорь', 'пожарный гидрант', 'кран', 'фейерверки', 'тыква', 
+    'борода', 'песочный замок', 'бикини', 'снежинка', 'черная дыра', 'ремень безопасности', 'колесо обозрения', 
+    'соска', 'магнит', 'шина', 'иглу', 'клубника', 'божья коровка', 'гоблин', 'солнечное затмение', 'люстра', 
+    'космос', 'маска', 'аист', 'танец', 'фотография', 'WIFI', 'полнолуние', 'отжимания', 'ветка', 'ветер', 
+    'аккумулятор', 'электричество', 'скачать', 'астронавт', 'обеденный лоток', 'сокровище', 'конфета в виде тростника', 
+    'салфетка', 'лист', 'штрих-код', 'созвездие', 'капкейк', 'беременная', 'виртуальная реальность', 'пароль', 
+    'забор', 'маяк', 'бумажная скрепка', 'жемчужное ожерелье', 'карандаш', 'солнечная система', 'зонт', 
+    'северный полюс', 'пудель', 'лук', 'яблочный пирог', 'скат', 'ров', 'свеча', 'пазл', 'шторм', 'замок', 
+    'Шерлок Холмс', 'Санта-Клаус', 'Кермит-лягушка', 'The Beatles', 'Рапунцель', 'Соник', 'Винни-Пух', 'Уолдо', 
+    'Барби', 'Базз Лайтер', 'Ромео и Джульетта', 'Эйнштейн', 'Золушка', 'Марио', 'Сократ', 'Алиса в стране чудес', 
+    'Скуби-Ду', 'Элмо', 'Пикачу', 'Винсент Ван Гог', 'Шекспир', 'Настольная игра', 'Тики-бар', 'Трофей', 
+    'Барбекю', 'Кубик льда', 'Лиса', 'Динамит', 'Библиотека', 'Зомби', 'Страус', 'Пластилин', 'Скатерть', 
+    'Пирог', 'Корневое пиво', 'Гонка', 'Бабушка', 'Лось'
+];
 
 async function broadcastRoomsList() {
     try {
@@ -37,7 +76,6 @@ async function broadcastRoomsList() {
 }
 
 io.on('connection', (socket) => {
-    
     socket.on('getRooms', broadcastRoomsList);
 
     socket.on('createRoom', async ({ mode, nickname }) => {
@@ -47,6 +85,7 @@ io.on('connection', (socket) => {
             
             roomPlayers[roomId] = [];
             roomScores[roomId] = {};
+            roomChats[roomId] = []; 
             
             const { error } = await supabase.from('game_rooms').insert([{ 
                 room_id: roomId, mode: mode, max_players: max, status: 'waiting', creator_nick: nickname 
@@ -68,10 +107,9 @@ io.on('connection', (socket) => {
 
             if (!roomPlayers[roomId]) roomPlayers[roomId] = [];
             if (!roomScores[roomId]) roomScores[roomId] = {};
+            if (!roomChats[roomId]) roomChats[roomId] = []; 
             
-            if (roomPlayers[roomId].length >= room.max_players) {
-                return socket.emit('joinError', 'Комната уже заполнена!');
-            }
+            if (roomPlayers[roomId].length >= room.max_players) return socket.emit('joinError', 'Комната уже заполнена!');
 
             socket.join(roomId);
             socket.roomId = roomId;
@@ -82,7 +120,12 @@ io.on('connection', (socket) => {
 
             await supabase.from('players').upsert({ nickname });
 
-            io.to(roomId).emit('chatMessage', { text: `Игрок ${nickname} присоединился.`, type: 'system-join' });
+            socket.emit('chatHistory', roomChats[roomId]);
+
+            const joinMsg = { text: `Игрок ${nickname} присоединился.`, type: 'system-join' };
+            roomChats[roomId].push(joinMsg);
+            io.to(roomId).emit('chatMessage', joinMsg);
+            
             broadcastRoomUpdate(roomId, room);
             broadcastRoomsList(); 
 
@@ -96,7 +139,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // === ЛОГИКА WORDLE ===
     socket.on('setWord', async ({ roomId, word }) => {
         const wordUpper = word.toUpperCase();
         await supabase.from('game_rooms').update({ 
@@ -132,7 +174,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // === ЛОГИКА КРОКОДИЛА ===
     socket.on('drawing', (data) => socket.to(socket.roomId).emit('drawing', data));
     socket.on('clearCanvas', () => io.to(socket.roomId).emit('clearCanvas'));
 
@@ -144,20 +185,27 @@ io.on('connection', (socket) => {
             const { data: r } = await supabase.from('game_rooms').select('setter_nick').eq('room_id', socket.roomId).single();
             await supabase.from('game_rooms').update({ status: 'ended' }).eq('room_id', socket.roomId);
             
-            io.to(socket.roomId).emit('chatMessage', { text: `⏰ Время вышло! Никто не угадал: ${word}`, type: 'system-info' });
+            const infoMsg = { text: `⏰ Время вышло! Никто не угадал: ${word}`, type: 'system-info' };
+            roomChats[socket.roomId].push(infoMsg);
+            io.to(socket.roomId).emit('chatMessage', infoMsg);
+            
             io.to(socket.roomId).emit('crocWin', { word: word, setter: r?.setter_nick || 'Неизвестно', winner: null });
             
             setTimeout(() => startCrocSelection(socket.roomId), 5000);
         });
     });
 
-    // === ЧАТ И ТРИГГЕР ПОБЕДЫ ===
     socket.on('chatMessage', async (text) => {
         const { data: room } = await supabase.from('game_rooms').select('*').eq('room_id', socket.roomId).single();
         if (!room) return;
         
         if (room.mode === 'croc' && room.status === 'playing' && socket.nickname !== room.setter_nick) {
             if (text.toLowerCase().trim() === room.secret_word?.toLowerCase()) {
+                
+                const guessMsg = { nick: socket.nickname, text: text };
+                roomChats[socket.roomId].push(guessMsg);
+                io.to(socket.roomId).emit('chatMessage', guessMsg);
+
                 await supabase.from('game_rooms').update({ status: 'ended' }).eq('room_id', socket.roomId);
                 
                 if (!roomScores[socket.roomId]) roomScores[socket.roomId] = {};
@@ -167,24 +215,38 @@ io.on('connection', (socket) => {
                 broadcastRoomUpdate(socket.roomId, room);
                 stopTimer(socket.roomId);
                 
-                io.to(socket.roomId).emit('chatMessage', { text: `🎉 ${socket.nickname} угадал слово!`, type: 'system-win' });
+                const winMsg = { text: `🎉 ${socket.nickname} угадал слово!`, type: 'system-win' };
+                roomChats[socket.roomId].push(winMsg);
+                io.to(socket.roomId).emit('chatMessage', winMsg);
+                
                 io.to(socket.roomId).emit('crocWin', { word: room.secret_word, setter: room.setter_nick, winner: socket.nickname });
 
                 setTimeout(() => startCrocSelection(socket.roomId), 5000);
                 return;
             }
         }
-        io.to(socket.roomId).emit('chatMessage', { nick: socket.nickname, text });
+        
+        const normalMsg = { nick: socket.nickname, text };
+        roomChats[socket.roomId].push(normalMsg);
+        io.to(socket.roomId).emit('chatMessage', normalMsg);
     });
 
     socket.on('disconnect', async () => {
         const roomId = socket.roomId;
         if (roomId && roomPlayers[roomId]) {
             roomPlayers[roomId] = roomPlayers[roomId].filter(p => p.id !== socket.id);
-            io.to(roomId).emit('chatMessage', { text: `Игрок ${socket.nickname} вышел.`, type: 'system-join' });
+            
+            const leaveMsg = { text: `Игрок ${socket.nickname} вышел.`, type: 'system-join' };
+            if (roomChats[roomId]) roomChats[roomId].push(leaveMsg);
+            io.to(roomId).emit('chatMessage', leaveMsg);
             
             if (roomPlayers[roomId].length === 0) {
                 stopTimer(roomId);
+                delete roomPlayers[roomId];
+                delete roomScores[roomId];
+                delete roomLastSetter[roomId];
+                delete roomChats[roomId]; 
+                await supabase.from('game_rooms').delete().eq('room_id', roomId);
             } else {
                 const { data: room } = await supabase.from('game_rooms').select('*').eq('room_id', roomId).single();
                 broadcastRoomUpdate(roomId, room);
