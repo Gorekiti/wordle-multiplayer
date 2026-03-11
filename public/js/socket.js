@@ -32,22 +32,15 @@ function openLobby(mode) {
     localStorage.setItem('wordle-nick', myNick);
     document.getElementById('auth-screen').classList.add('hidden');
     document.getElementById('lobby-screen').classList.remove('hidden');
+    
+    // Запрашиваем лобби 1 раз, дальше сервер будет сам присылать обновления
     socket.emit('getRooms');
 }
-
-// === ФОНОВОЕ АВТООБНОВЛЕНИЕ ЛОББИ ===
-setInterval(() => {
-    const lobbyScreen = document.getElementById('lobby-screen');
-    if (lobbyScreen && !lobbyScreen.classList.contains('hidden')) {
-        socket.emit('getRooms');
-    }
-}, 2000); // Каждые 2 секунды сервер бесшумно отдает свежий список
 
 socket.on('roomsList', (rooms) => {
     const list = document.getElementById('rooms-list');
     const filteredRooms = rooms.filter(r => r.mode === myMode);
     
-    // Если комнат нет, показываем сообщение
     if (filteredRooms.length === 0) {
         list.innerHTML = `<p style="text-align: center; width: 100%; color: #aaa; margin-top: 20px;">Нет открытых комнат. Создай свою!</p>`;
         return;
