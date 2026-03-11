@@ -2,52 +2,72 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wordle Duo</title>
+    <title>Wordle & Croc Multiplayer</title>
     <link rel="stylesheet" href="style.css">
     <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
     <div id="toast-container"></div>
 
-    <div id="auth-screen">
-        <div class="auth-box">
+    <div id="auth-screen" class="screen">
+        <div class="box">
             <h1>Wordle Duo</h1>
-            <input type="text" id="nick-input" placeholder="Твой ник" maxlength="12">
-            <button id="create-room-btn" disabled onclick="createRoom()">Создать комнату</button>
+            <input type="text" id="nick-input" placeholder="Ваш ник">
+            <div class="mode-select">
+                <button onclick="openLobby('wordle')">Wordle (1x1)</button>
+                <button onclick="openLobby('croc')">Крокодил</button>
+            </div>
         </div>
     </div>
 
-    <div id="game-ui" class="main-layout hidden">
-        <aside class="sidebar">
-            <button class="nav-btn" onclick="goHome()">🏠 Домой</button>
-            <h3>🏆 Лидеры</h3>
-            <ul id="leaderboard"></ul>
-        </aside>
+    <div id="lobby-screen" class="screen hidden">
+        <div class="lobby-box">
+            <header>
+                <button onclick="goHome()">🏠</button>
+                <h2 id="lobby-title">Лобби</h2>
+                <button onclick="createRoom()">+ Создать</button>
+            </header>
+            <div id="rooms-list"></div>
+        </div>
+    </div>
 
-        <main class="game-area">
-            <div id="result-display" class="hidden"></div>
-            <h2 id="status-msg">Ждем соперника...</h2>
-            
-            <div id="setup-zone" class="hidden">
-                <input type="text" id="secret-word" placeholder="Загадай слово (2-10)">
-                <button onclick="sendSecret()">Загадать</button>
-            </div>
+    <div id="game-screen" class="screen hidden">
+        <div class="main-layout">
+            <aside class="sidebar">
+                <button class="nav-btn" onclick="goHome()">🏠 Домой</button>
+                <h3>🏆 Топ</h3>
+                <ul id="leaderboard"></ul>
+            </aside>
 
-            <div id="grid-zone" class="hidden">
-                <div id="grid"></div>
-                <div id="input-wrapper" class="hidden">
-                    <input type="text" id="guess-input" placeholder="Твой ответ">
-                    <button onclick="sendGuess()">OK</button>
+            <main class="game-area">
+                <div id="result-display" class="hidden"></div>
+                <h2 id="status-msg">Ждем...</h2>
+                
+                <div id="wordle-ui" class="hidden">
+                    <div id="grid"></div>
+                    <div id="wordle-controls" class="hidden">
+                        <input type="text" id="guess-input" placeholder="Слово">
+                        <button onclick="sendGuess()">OK</button>
+                    </div>
                 </div>
-            </div>
-        </main>
 
-        <aside class="sidebar">
-            <h3>👥 В комнате</h3>
-            <ul id="player-list"></ul>
-            <button class="nav-btn" onclick="copyRoomLink()">🔗 Копировать ссылку</button>
-        </aside>
+                <div id="croc-ui" class="hidden">
+                    <canvas id="canvas" width="600" height="400"></canvas>
+                    <div id="croc-tools" class="hidden">
+                        <input type="color" id="color-picker">
+                        <input type="range" id="size-picker" min="1" max="20" value="5">
+                        <button onclick="clearCanvas()">🗑</button>
+                    </div>
+                </div>
+            </main>
+
+            <aside class="sidebar">
+                <h3>💬 Чат / Игроки</h3>
+                <div id="chat-box"></div>
+                <input type="text" id="chat-input" placeholder="Напиши что-то...">
+                <ul id="player-list"></ul>
+            </aside>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>
