@@ -19,7 +19,6 @@ let roomLastSetter = {};
 const ROUND_TIME = 80; 
 const CROC_WORDS = ['Телефон', 'Борщ', 'Программист', 'Гитара', 'Космос', 'Крыса', 'Университет', 'Пицца', 'Дракон', 'Скейтборд', 'Машина', 'Собака', 'Дерево'];
 
-// Улучшенная функция лобби с отловом ошибок БД
 async function broadcastRoomsList() {
     try {
         const { data: rooms, error } = await supabase.from('game_rooms').select('*').order('created_at', { ascending: false });
@@ -123,6 +122,8 @@ io.on('connection', (socket) => {
 
         if (guess === room.secret_word || newHistory.length >= 6) {
             if (guess === room.secret_word) {
+                if (!roomScores[roomId]) roomScores[roomId] = {};
+                if (!roomScores[roomId][nickname]) roomScores[roomId][nickname] = 0;
                 roomScores[roomId][nickname] += 1;
                 broadcastRoomUpdate(roomId, room);
             }
@@ -159,16 +160,15 @@ io.on('connection', (socket) => {
             if (text.toLowerCase().trim() === room.secret_word?.toLowerCase()) {
                 await supabase.from('game_rooms').update({ status: 'ended' }).eq('room_id', socket.roomId);
                 
-                io.to(socket.roomId).emit('chatMessage', { text: `🎉 ${socket.nickname} угадал слово!`, type: 'system-win' });
+                if (!roomScores[socket.roomId]) roomScores[socket.roomId] = {};
+                if (!roomScores[socket.roomId][socket.nickname]) roomScores[socket.roomId][socket.nickname] = 0;
+                
                 roomScores[socket.roomId][socket.nickname] += 1;
                 broadcastRoomUpdate(socket.roomId, room);
                 stopTimer(socket.roomId);
                 
-                io.to(socket.roomId).emit('crocWin', {
-                    word: room.secret_word,
-                    setter: room.setter_nick,
-                    winner: socket.nickname
-                });
+                io.to(socket.roomId).emit('chatMessage', { text: `🎉 ${socket.nickname} угадал слово!`, type: 'system-win' });
+                io.to(socket.roomId).emit('crocWin', { word: room.secret_word, setter: room.setter_nick, winner: socket.nickname });
 
                 setTimeout(() => startCrocSelection(socket.roomId), 5000);
                 return;
@@ -185,10 +185,6 @@ io.on('connection', (socket) => {
             
             if (roomPlayers[roomId].length === 0) {
                 stopTimer(roomId);
-                delete roomPlayers[roomId];
-                delete roomScores[roomId];
-                delete roomLastSetter[roomId];
-                await supabase.from('game_rooms').delete().eq('room_id', roomId);
             } else {
                 const { data: room } = await supabase.from('game_rooms').select('*').eq('room_id', roomId).single();
                 broadcastRoomUpdate(roomId, room);
