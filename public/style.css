@@ -211,9 +211,9 @@ button:hover { filter: brightness(1.2); }
     flex-direction: column;
     background: #1a1a1a;
     border-radius: 12px;
-    overflow: hidden; /* Важно: делает общие скругления для панели и холста */
+    overflow: hidden;
     box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-    /* Убрали padding */
+    position: relative; /* <-- ДОБАВЬ ЭТО, чтобы экран победы не улетал за пределы */
 }
 
 .toolbar {
@@ -228,11 +228,12 @@ button:hover { filter: brightness(1.2); }
 
 canvas {
     background: white;
-    width: 100%;         /* Занимает всю ширину обертки... */
-    max-width: 900px;    /* ...но не больше 900px */
-    aspect-ratio: 9 / 5; /* Сохраняет твои пропорции (900х500) */
-    height: auto;        /* Высота подстраивается под ширину */
-    max-height: calc(100vh - 200px); /* САМОЕ ВАЖНОЕ: не дает холсту вырасти больше высоты экрана минус отступы */
+    width: 100%;
+    max-width: 900px;
+    aspect-ratio: 9 / 5;
+    height: auto;
+    max-height: calc(100vh - 200px);
+    touch-action: none; /* <-- ВОТ ЭТА СТРОЧКА ИСПРАВИТ ПЛАНШЕТ И ТЕЛЕФОНЫ */
 }
 
 .color-swatch.active { 
@@ -370,6 +371,54 @@ canvas {
     width: 100%;
     display: block;
     margin-bottom: 15px;
+}
+
+/* === ЭКРАН ПОБЕДЫ В КРОКОДИЛЕ === */
+#croc-win-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85); /* Полупрозрачный темный фон */
+    backdrop-filter: blur(5px);      /* Красивое размытие рисунка под ним */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;                     /* Поверх холста и панели */
+    animation: fadeIn 0.3s ease;
+}
+
+#croc-win-screen.hidden {
+    display: none !important;
+}
+
+.win-content {
+    background: #1a1a1a;
+    padding: 30px 50px;
+    border-radius: 15px;
+    border: 1px solid var(--accent);
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+#win-word {
+    font-size: 2.5rem;
+    color: var(--accent);
+    margin: 0 0 15px 0;
+    text-transform: uppercase;
+}
+
+.win-player {
+    font-size: 1.2rem;
+    margin: 10px 0;
+}
+
+.win-timer-block {
+    margin-top: 20px;
+    font-size: 1.1rem;
+    color: #aaa;
 }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
