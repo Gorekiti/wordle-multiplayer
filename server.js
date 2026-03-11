@@ -13,7 +13,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 let roomPlayers = {}; 
 let roomTimers = {}; 
-let roomScores = {}; // Временное хранилище очков для каждой комнаты
+let roomScores = {}; // Временное хранилище очков
 
 const ROUND_TIME = 80; 
 const CROC_WORDS = ['Телефон', 'Борщ', 'Программист', 'Гитара', 'Космос', 'Крыса', 'Университет', 'Пицца', 'Дракон', 'Скейтборд', 'Машина', 'Яблоко', 'Интернет', 'Наушники', 'Зеркало'];
@@ -33,11 +33,9 @@ io.on('connection', (socket) => {
         const roomId = Math.random().toString(36).substring(2, 8);
         const max = mode === 'wordle' ? 2 : 10;
         
-        // Создаем локально сразу для скорости
         roomPlayers[roomId] = [];
         roomScores[roomId] = {};
         
-        // Фоном пишем в БД
         supabase.from('game_rooms').insert([{ 
             room_id: roomId, mode: mode, max_players: max, status: 'waiting', creator_nick: nickname 
         }]).then();
@@ -59,13 +57,9 @@ io.on('connection', (socket) => {
         socket.nickname = nickname;
         
         roomPlayers[roomId].push({ id: socket.id, nick: nickname });
-        if (roomScores[roomId][nickname] === undefined) {
-            roomScores[roomId][nickname] = 0; // Начальный счет
-        }
+        if (roomScores[roomId][nickname] === undefined) roomScores[roomId][nickname] = 0;
 
-        // Системное уведомление в чат
         io.to(roomId).emit('chatMessage', { text: `Игрок ${nickname} присоединился.`, type: 'system-join' });
-        
         broadcastRoomUpdate(roomId, room);
 
         if (room.mode === 'wordle' && roomPlayers[roomId].length === 2 && room.status === 'waiting') {
@@ -75,24 +69,9 @@ io.on('connection', (socket) => {
         }
     });
 
+    // === ЛОГИКА КРОКОДИЛА ===
     socket.on('drawing', (data) => socket.to(socket.roomId).emit('drawing', data));
     socket.on('clearCanvas', () => io.to(socket.roomId).emit('clearCanvas'));
-
-    socket.on('chatMessage', async (text) => {
-        const { data: room } = await supabase.from('game_rooms').select('*').eq('room_id', socket.roomId).single();
-        if (!room) return;
-        
-        if (room.mode === 'croc' && room.status === 'playing' && socket.nickname !== room.setter_nick) {
-            if (text.toLowerCase().trim() === room.secret_word?.toLowerCase()) {
-                io.to(socket.roomId).emit('chatMessage', { text: `🎉 ${socket.nickname} угадал слово!`, type: 'system-win' });
-                roomScores[socket.roomId][socket.nickname] += 1;
-                broadcastRoomUpdate(socket.roomId, room);
-                stopTimer(socket.roomId);
-                return startCrocSelection(socket.roomId);
-            }
-        }
-        io.to(socket.roomId).emit('chatMessage', { nick: socket.nickname, text });
-    });
 
     socket.on('wordChosen', async (word) => {
         await supabase.from('game_rooms').update({ secret_word: word, status: 'playing' }).eq('room_id', socket.roomId);
@@ -100,6 +79,18 @@ io.on('connection', (socket) => {
         startTimer(socket.roomId, () => {
             io.to(socket.roomId).emit('chatMessage', { text: `⏰ Время вышло! Слово: ${word}`, type: 'system-info' });
             startCrocSelection(socket.roomId);
+        });
+    });
+
+    // === ЛОГИКА WORDLE ===
+    socket.on('setWord', async ({ roomId, word }) => {
+        const wordUpper = word.toUpperCase();
+        await supabase.from('game_rooms').update({ secret_word: wordUpper, status: 'playing', attempts_history: [] }).eq('room_id', roomId);
+        io.to(roomId).emit('wordReady', { length: wordUpper.length });
+        
+        startTimer(roomId, () => {
+            io.to(roomId).emit('gameOver', { winner: 'Время вышло', word: wordUpper });
+            setTimeout(() => startWordleRound(roomId), 4000);
         });
     });
 
@@ -123,8 +114,25 @@ io.on('connection', (socket) => {
             }
             stopTimer(socket.roomId);
             io.to(socket.roomId).emit('gameOver', { winner: guess === room.secret_word ? nickname : 'Никто', word: room.secret_word });
-            setTimeout(() => startWordleRound(socket.roomId), 6000);
+            setTimeout(() => startWordleRound(socket.roomId), 5000);
         }
+    });
+
+    // === ОБЩИЙ ЧАТ ===
+    socket.on('chatMessage', async (text) => {
+        const { data: room } = await supabase.from('game_rooms').select('*').eq('room_id', socket.roomId).single();
+        if (!room) return;
+        
+        if (room.mode === 'croc' && room.status === 'playing' && socket.nickname !== room.setter_nick) {
+            if (text.toLowerCase().trim() === room.secret_word?.toLowerCase()) {
+                io.to(socket.roomId).emit('chatMessage', { text: `🎉 ${socket.nickname} угадал слово!`, type: 'system-win' });
+                roomScores[socket.roomId][socket.nickname] += 1;
+                broadcastRoomUpdate(socket.roomId, room);
+                stopTimer(socket.roomId);
+                return startCrocSelection(socket.roomId);
+            }
+        }
+        io.to(socket.roomId).emit('chatMessage', { nick: socket.nickname, text });
     });
 
     socket.on('disconnect', async () => {
@@ -134,7 +142,6 @@ io.on('connection', (socket) => {
             io.to(roomId).emit('chatMessage', { text: `Игрок ${socket.nickname} вышел.`, type: 'system-join' });
             
             if (roomPlayers[roomId].length === 0) {
-                // Полная очистка комнаты при выходе всех
                 stopTimer(roomId);
                 delete roomPlayers[roomId];
                 delete roomScores[roomId];
@@ -170,14 +177,12 @@ function stopTimer(roomId) {
 
 function broadcastRoomUpdate(roomId, room) {
     if (!roomScores[roomId]) return;
-    // Сортируем локальный рейтинг
     const leaders = Object.keys(roomScores[roomId]).map(nick => ({
         nickname: nick, score: roomScores[roomId][nick]
     })).sort((a, b) => b.score - a.score);
 
     io.to(roomId).emit('roomUpdate', { 
-        session: room, 
-        leaders: leaders, 
+        session: room, leaders, 
         activePlayers: roomPlayers[roomId]?.map(p => p.nick) || [],
         maxPlayers: room?.max_players || 0
     });
@@ -187,13 +192,10 @@ function startCrocSelection(roomId) {
     const players = roomPlayers[roomId];
     if (!players || players.length < 2) return;
     const setter = players[Math.floor(Math.random() * players.length)];
-    
-    // Выбираем 3 случайных уникальных слова
     const shuffled = [...CROC_WORDS].sort(() => 0.5 - Math.random());
-    const options = shuffled.slice(0, 3);
-
+    
     supabase.from('game_rooms').update({ setter_nick: setter.nick, status: 'waiting' }).eq('room_id', roomId).then();
-    io.to(roomId).emit('crocSelection', { setter: setter.nick, options });
+    io.to(roomId).emit('crocSelection', { setter: setter.nick, options: shuffled.slice(0, 3) });
 }
 
 async function startWordleRound(roomId) {
@@ -204,9 +206,11 @@ async function startWordleRound(roomId) {
     if (room?.setter_nick === setter) [setter, guesser] = [guesser, setter];
     
     await supabase.from('game_rooms').update({ setter_nick: setter, guesser_nick: guesser, status: 'setting', attempts_history: [], secret_word: null }).eq('room_id', roomId);
-    io.to(roomId).emit('gameStart', { mode: 'wordle', setter, guesser });
+    io.to(roomId).emit('gameStart', { setter, guesser });
+    
+    // Таймер на загадывание слова
     startTimer(roomId, () => {
-        io.to(roomId).emit('gameOver', { winner: 'Время вышло', word: '???' });
+        io.to(roomId).emit('gameOver', { winner: 'Время вышло', word: 'Слово не загадано' });
         setTimeout(() => startWordleRound(roomId), 4000);
     });
 }

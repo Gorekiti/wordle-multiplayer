@@ -4,8 +4,7 @@ let currentWordLen = 0, currentAttempt = 0;
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-let drawing = false;
-let currentColor = '#000000';
+let drawing = false, currentColor = '#000000';
 
 canvas.addEventListener('pointerdown', (e) => {
     if (!isSetter || myMode !== 'croc') return;
@@ -17,8 +16,7 @@ canvas.addEventListener('pointermove', (e) => {
     const pos = getPos(e);
     const size = document.getElementById('size-picker').value;
     const data = { x: pos.x, y: pos.y, color: currentColor, size: size };
-    socket.emit('drawing', data);
-    drawLocal(data);
+    socket.emit('drawing', data); drawLocal(data);
 });
 window.addEventListener('pointerup', () => drawing = false);
 
@@ -31,14 +29,13 @@ function getPos(e) {
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
 }
 
-// Управление палитрой
 function setColor(color, el) {
     currentColor = color;
     document.querySelectorAll('.color-swatch, .tool-btn').forEach(btn => btn.classList.remove('active'));
     if (el) el.classList.add('active');
 }
 function setEraser(el) {
-    currentColor = '#ffffff'; // Цвет фона
+    currentColor = '#ffffff';
     document.querySelectorAll('.color-swatch, .tool-btn').forEach(btn => btn.classList.remove('active'));
     el.classList.add('active');
 }
@@ -83,25 +80,34 @@ function join(id) {
 function createRoom() { socket.emit('createRoom', { mode: myMode, nickname: myNick }); }
 socket.on('roomCreated', (id) => join(id));
 
+// === ЖЕСТКОЕ РАЗДЕЛЕНИЕ ИНТЕРФЕЙСОВ ===
 socket.on('roomUpdate', ({ session, leaders, activePlayers, maxPlayers }) => {
+    myMode = session.mode; // Синхронизируем режим с сервером
     document.getElementById('leaderboard').innerHTML = leaders.map(p => `<li>${p.nickname}: <b>${p.score}</b></li>`).join('');
     document.getElementById('player-list').innerHTML = activePlayers.map(name => `<li>${name}${name === myNick ? " (Вы)" : ""}</li>`).join('');
-    
-    // Реал-тайм счетчик игроков
     document.getElementById('player-count-badge').innerText = `${activePlayers.length}/${maxPlayers}`;
 
-    if (session.mode === 'wordle') document.getElementById('wordle-ui').classList.remove('hidden');
-    if (session.mode === 'croc') document.getElementById('croc-ui').classList.remove('hidden');
+    if (myMode === 'wordle') {
+        document.getElementById('wordle-ui').classList.remove('hidden');
+        document.getElementById('croc-ui').classList.add('hidden');
+    } else {
+        document.getElementById('croc-ui').classList.remove('hidden');
+        document.getElementById('wordle-ui').classList.add('hidden');
+    }
 });
 
+// Событие старта раунда Wordle
 socket.on('gameStart', ({ setter, guesser }) => {
-    resetUI(); isSetter = (myNick === setter);
+    resetUI(); 
+    isSetter = (myNick === setter);
     document.getElementById('status-msg').innerText = isSetter ? `Загадай для ${guesser}` : `Ждем ${setter}...`;
     if (isSetter) document.getElementById('setup-zone').classList.remove('hidden');
 });
 
+// Событие старта раунда Крокодила
 socket.on('crocSelection', ({ setter, options }) => {
-    resetUI(); isSetter = (myNick === setter);
+    resetUI(); 
+    isSetter = (myNick === setter);
     if (isSetter) {
         document.getElementById('word-picker').classList.remove('hidden');
         document.getElementById('word-options').innerHTML = options.map(w => `<button class="word-btn" onclick="chooseWord('${w}')">${w}</button>`).join('');
@@ -119,28 +125,30 @@ function chooseWord(word) {
 
 socket.on('gameStarted', ({ wordLength }) => {
     if (!isSetter) document.getElementById('status-msg').innerText = `Угадай (${wordLength} букв)`;
+    document.getElementById('croc-tools').classList.toggle('hidden', !isSetter);
 });
 
+// ENTER ключи для инпутов
 document.getElementById('chat-input').addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && e.target.value.trim()) { socket.emit('chatMessage', e.target.value); e.target.value = ''; }
+});
+document.getElementById('secret-word').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && e.target.value.trim()) sendSecret();
+});
+document.getElementById('guess-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && e.target.value.trim()) sendGuess();
 });
 
 socket.on('chatMessage', ({ nick, text, type }) => {
     const box = document.getElementById('chat-box');
     const msg = document.createElement('div');
-    
-    // Обработка системных сообщений
     if (type === 'system-join' || type === 'system-info') {
-        msg.className = 'chat-sys';
-        msg.innerHTML = `<i>${text}</i>`;
+        msg.className = 'chat-sys'; msg.innerHTML = `<i>${text}</i>`;
     } else if (type === 'system-win') {
-        msg.className = 'chat-sys win';
-        msg.innerHTML = `<b>${text}</b>`;
+        msg.className = 'chat-sys win'; msg.innerHTML = `<b>${text}</b>`;
     } else {
-        msg.className = 'chat-msg';
-        msg.innerHTML = `<b>${nick}:</b> ${text}`;
+        msg.className = 'chat-msg'; msg.innerHTML = `<b>${nick}:</b> ${text}`;
     }
-    
     box.appendChild(msg); box.scrollTop = box.scrollHeight;
 });
 
@@ -166,21 +174,27 @@ function resetUI() {
     document.getElementById('setup-zone').classList.add('hidden');
     document.getElementById('input-wrapper').classList.add('hidden');
     document.getElementById('word-picker').classList.add('hidden');
+    document.getElementById('croc-tools').classList.add('hidden');
     document.getElementById('result-display').classList.add('hidden');
     document.getElementById('status-msg').innerText = "Подготовка...";
 }
 
-// Wordle Logic
+// === WORDLE LOGIC ===
 function sendSecret() {
     const word = document.getElementById('secret-word').value.trim().toUpperCase();
-    if (word.length >= 2) socket.emit('setWord', { roomId, word });
+    if (word.length >= 2) {
+        socket.emit('setWord', { roomId, word });
+        document.getElementById('secret-word').value = "";
+    }
 }
+
 socket.on('wordReady', ({ length }) => {
     currentWordLen = length;
     document.getElementById('setup-zone').classList.add('hidden');
     document.getElementById('input-wrapper').classList.toggle('hidden', isSetter);
     initGrid(length);
 });
+
 function initGrid(len) {
     currentAttempt = 0; const grid = document.getElementById('grid'); grid.innerHTML = "";
     for (let i = 0; i < 6; i++) {
@@ -189,13 +203,17 @@ function initGrid(len) {
         grid.appendChild(row);
     }
 }
+
 function sendGuess() {
     const guess = document.getElementById('guess-input').value.trim().toUpperCase();
     if (guess.length === currentWordLen) {
-        socket.emit('makeGuess', { roomId, guess, nickname: myNick });
+        socket.emit('makeGuess', { guess, nickname: myNick });
         document.getElementById('guess-input').value = "";
+    } else {
+        showNotify(`Нужно ${currentWordLen} букв!`, "error");
     }
 }
+
 socket.on('guessResult', ({ result, guess }) => {
     const rows = document.querySelectorAll('.row');
     if (rows[currentAttempt]) {
@@ -204,7 +222,9 @@ socket.on('guessResult', ({ result, guess }) => {
         currentAttempt++;
     }
 });
+
 socket.on('gameOver', ({ winner, word }) => {
     const res = document.getElementById('result-display');
     res.innerText = `Слово: ${word}`; res.classList.remove('hidden');
+    document.getElementById('input-wrapper').classList.add('hidden');
 });

@@ -6,8 +6,10 @@ body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; ma
 .box { background: var(--panel); padding: 40px; border-radius: 20px; text-align: center; border: 1px solid var(--border); }
 .logo-text span { color: var(--accent); }
 
-.app-container { display: grid; grid-template-columns: 280px 1fr 320px; height: 100vh; }
+.app-container { display: grid; grid-template-columns: 280px 1fr 320px; height: 100vh; width: 100vw; }
 .side-panel { background: var(--panel); border: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
+
+.game-core { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; position: relative; overflow-y: auto; }
 
 /* Списки с прокруткой */
 .stat-section, .players-section { display: flex; flex-direction: column; flex: 1; min-height: 0; }
@@ -50,7 +52,7 @@ canvas { touch-action: none; display: block; }
 .options-row { display: flex; gap: 15px; }
 .word-btn { padding: 15px 30px; font-size: 1.2rem; }
 
-#grid { display: grid; gap: 8px; justify-content: center; }
+#grid { display: grid; gap: 8px; justify-content: center; margin-bottom: 10px;}
 .row { display: flex; gap: 8px; }
 .tile { width: 50px; height: 50px; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.4rem; }
 .correct { background: var(--accent); border-color: var(--accent); }
@@ -60,3 +62,5 @@ canvas { touch-action: none; display: block; }
 #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
 .toast { padding: 15px 25px; background: var(--panel); border-left: 5px solid var(--accent); margin-bottom: 10px; animation: slideIn 0.3s ease; }
 @keyframes slideIn { from { transform: translateX(100%); } }
+
+.input-group { display: flex; gap: 10px; justify-content: center; width: 100%;}
