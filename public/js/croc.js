@@ -131,6 +131,9 @@ function chooseWord(word) {
     socket.emit('wordChosen', word);
 }
 
+canvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
 // === НАЧАЛО ИГРЫ (ОБНОВЛЕННЫЙ СТАТУС) ===
 socket.on('gameStarted', () => {
     if (!isSetter && myMode === 'croc') {
