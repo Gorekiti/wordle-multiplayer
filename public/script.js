@@ -61,10 +61,12 @@ socket.on('roomsList', (rooms) => {
     const list = document.getElementById('rooms-list');
     list.innerHTML = rooms.filter(r => r.mode === myMode).map(r => `
         <div class="room-card">
-            <h3>Создатель: ${r.creator_nick || 'Неизвестно'}</h3>
-            <p>Игроков: ${r.currentCount}/${r.max_players}</p>
-            <button ${r.currentCount >= r.max_players ? 'disabled style="background:#3a3a3c"' : ''} onclick="join('${r.room_id}')">
-                Войти в игру
+            <div class="room-info">
+                <h3>Создатель: ${r.creator_nick || 'Неизвестно'}</h3>
+                <p>Игроков: <span class="badge">${r.currentCount}/${r.max_players}</span></p>
+            </div>
+            <button class="join-btn" ${r.currentCount >= r.max_players ? 'disabled style="background:#3a3a3c"' : ''} onclick="join('${r.room_id}')">
+                ${r.currentCount >= r.max_players ? 'Заполнена' : 'Войти'}
             </button>
         </div>
     `).join('');
@@ -73,16 +75,23 @@ socket.on('roomsList', (rooms) => {
 function join(id) {
     roomId = id;
     socket.emit('joinRoom', { roomId, nickname: myNick });
-    document.getElementById('lobby-screen').classList.add('hidden');
-    document.getElementById('game-screen').classList.remove('hidden');
 }
+
+// Обработка ошибок входа
+socket.on('joinError', (msg) => {
+    showNotify(msg, "error");
+    goHome();
+});
 
 function createRoom() { socket.emit('createRoom', { mode: myMode, nickname: myNick }); }
 socket.on('roomCreated', (id) => join(id));
 
-// === ЖЕСТКОЕ РАЗДЕЛЕНИЕ ИНТЕРФЕЙСОВ ===
 socket.on('roomUpdate', ({ session, leaders, activePlayers, maxPlayers }) => {
-    myMode = session.mode; // Синхронизируем режим с сервером
+    document.getElementById('lobby-screen').classList.add('hidden');
+    document.getElementById('game-screen').classList.remove('hidden');
+    
+    myMode = session.mode;
+    document.getElementById('status-msg').innerText = "Ожидание начала раунда...";
     document.getElementById('leaderboard').innerHTML = leaders.map(p => `<li>${p.nickname}: <b>${p.score}</b></li>`).join('');
     document.getElementById('player-list').innerHTML = activePlayers.map(name => `<li>${name}${name === myNick ? " (Вы)" : ""}</li>`).join('');
     document.getElementById('player-count-badge').innerText = `${activePlayers.length}/${maxPlayers}`;
@@ -96,7 +105,6 @@ socket.on('roomUpdate', ({ session, leaders, activePlayers, maxPlayers }) => {
     }
 });
 
-// Событие старта раунда Wordle
 socket.on('gameStart', ({ setter, guesser }) => {
     resetUI(); 
     isSetter = (myNick === setter);
@@ -104,7 +112,6 @@ socket.on('gameStart', ({ setter, guesser }) => {
     if (isSetter) document.getElementById('setup-zone').classList.remove('hidden');
 });
 
-// Событие старта раунда Крокодила
 socket.on('crocSelection', ({ setter, options }) => {
     resetUI(); 
     isSetter = (myNick === setter);
@@ -125,10 +132,8 @@ function chooseWord(word) {
 
 socket.on('gameStarted', ({ wordLength }) => {
     if (!isSetter) document.getElementById('status-msg').innerText = `Угадай (${wordLength} букв)`;
-    document.getElementById('croc-tools').classList.toggle('hidden', !isSetter);
 });
 
-// ENTER ключи для инпутов
 document.getElementById('chat-input').addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && e.target.value.trim()) { socket.emit('chatMessage', e.target.value); e.target.value = ''; }
 });
@@ -174,9 +179,7 @@ function resetUI() {
     document.getElementById('setup-zone').classList.add('hidden');
     document.getElementById('input-wrapper').classList.add('hidden');
     document.getElementById('word-picker').classList.add('hidden');
-    document.getElementById('croc-tools').classList.add('hidden');
     document.getElementById('result-display').classList.add('hidden');
-    document.getElementById('status-msg').innerText = "Подготовка...";
 }
 
 // === WORDLE LOGIC ===

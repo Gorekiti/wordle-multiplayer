@@ -3,13 +3,23 @@ body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; ma
 .hidden { display: none !important; }
 
 .screen { height: 100vh; display: flex; align-items: center; justify-content: center; }
-.box { background: var(--panel); padding: 40px; border-radius: 20px; text-align: center; border: 1px solid var(--border); }
+.box { background: var(--panel); padding: 40px; border-radius: 20px; text-align: center; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 .logo-text span { color: var(--accent); }
 
+/* ФИКС ЦЕНТРИРОВАНИЯ И ШИРИНЫ */
 .app-container { display: grid; grid-template-columns: 280px 1fr 320px; height: 100vh; width: 100vw; }
 .side-panel { background: var(--panel); border: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
-
 .game-core { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; position: relative; overflow-y: auto; }
+
+/* Лобби и Карточки Комнат */
+.lobby-container { background: var(--panel); padding: 30px; border-radius: 15px; width: 80%; max-width: 900px; border: 1px solid var(--border); }
+.lobby-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+.rooms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; overflow-y: auto; max-height: 60vh; padding: 10px; }
+.room-card { background: linear-gradient(145deg, #1e1e20, #161618); padding: 20px; border-radius: 12px; border: 1px solid var(--border); border-left: 4px solid var(--accent); display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; }
+.room-card:hover { transform: translateY(-3px); }
+.room-info h3 { margin: 0 0 10px 0; font-size: 1.1rem; }
+.room-info p { margin: 0 0 15px 0; color: #aaa; }
+.join-btn { width: 100%; }
 
 /* Списки с прокруткой */
 .stat-section, .players-section { display: flex; flex-direction: column; flex: 1; min-height: 0; }
@@ -18,9 +28,8 @@ body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; ma
 .scroll-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
 .scroll-list li { background: var(--bg); margin-bottom: 8px; padding: 10px; border-radius: 8px; border: 1px solid var(--border); }
 
-/* Заголовки со счетчиками */
 .flex-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-.badge { background: var(--accent); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
+.badge { background: var(--accent); padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; color: white; }
 
 /* Чат */
 .chat-section { flex: 1.5; display: flex; flex-direction: column; margin: 15px 0; min-height: 0; }
@@ -29,27 +38,25 @@ body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; ma
 .chat-sys.win { color: var(--accent); font-size: 1em; }
 .chat-msg { margin-bottom: 5px; word-break: break-word; }
 
-.timer-bar { font-size: 2rem; color: var(--accent); background: rgba(83,141,78,0.1); padding: 10px 30px; border-radius: 40px; margin-bottom: 20px; font-weight: bold; }
+.timer-bar { font-size: 2rem; color: var(--accent); background: rgba(83,141,78,0.1); padding: 10px 30px; border-radius: 40px; margin-bottom: 20px; font-weight: bold; border: 1px solid rgba(83,141,78,0.3); }
 
 input { background: var(--bg); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; }
 button { background: var(--accent); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-
-.rooms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; overflow-y: auto; max-height: 60vh; padding: 10px; }
-.room-card { background: var(--bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between; }
+button:hover { filter: brightness(1.2); }
 
 /* Canvas и инструменты */
-.canvas-wrapper { position: relative; background: white; border-radius: 8px; }
+.canvas-wrapper { position: relative; background: white; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 canvas { touch-action: none; display: block; }
 .toolbar { background: #1a1a1b; padding: 10px; border-radius: 0 0 8px 8px; display: flex; gap: 15px; align-items: center; justify-content: center; border-top: 1px solid var(--border); }
 .palette { display: flex; gap: 5px; }
 .color-swatch { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
-.color-swatch.active { border: 2px solid white; transform: scale(1.1); }
+.color-swatch.active { border: 2px solid #538d4e; transform: scale(1.1); }
 .tool-btn { background: var(--bg); border: 1px solid var(--border); padding: 5px 10px; }
-.tool-btn.active { border-color: white; }
+.tool-btn.active { border-color: #538d4e; }
 
 /* Модалка выбора слова */
 .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; border-radius: 8px; }
-.options-row { display: flex; gap: 15px; }
+.options-row { display: flex; gap: 15px; margin-top: 15px; }
 .word-btn { padding: 15px 30px; font-size: 1.2rem; }
 
 #grid { display: grid; gap: 8px; justify-content: center; margin-bottom: 10px;}
@@ -60,7 +67,7 @@ canvas { touch-action: none; display: block; }
 .absent { background: #3a3a3c; border-color: #3a3a3c; }
 
 #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-.toast { padding: 15px 25px; background: var(--panel); border-left: 5px solid var(--accent); margin-bottom: 10px; animation: slideIn 0.3s ease; }
+.toast { padding: 15px 25px; background: var(--panel); border-left: 5px solid var(--accent); margin-bottom: 10px; animation: slideIn 0.3s ease; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
 @keyframes slideIn { from { transform: translateX(100%); } }
 
 .input-group { display: flex; gap: 10px; justify-content: center; width: 100%;}
