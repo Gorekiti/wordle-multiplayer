@@ -148,18 +148,18 @@ button:hover { filter: brightness(1.2); }
 /* === ОБНОВЛЕННАЯ СЕТКА WORDLE === */
 #grid { 
     display: grid; 
-    gap: 12px; /* Больше пространства между строками */
+    gap: 12px; 
     justify-content: center; 
     margin: 20px 0;
 }
 
 .row { 
     display: flex; 
-    gap: 12px; /* Больше пространства между буквами */
+    gap: 12px; 
 }
 
 .tile { 
-    width: 62px;  /* Увеличено для красоты */
+    width: 62px; 
     height: 62px; 
     border: 2px solid var(--border); 
     display: flex; 
@@ -167,7 +167,7 @@ button:hover { filter: brightness(1.2); }
     justify-content: center; 
     font-weight: 800; 
     font-size: 2rem; 
-    border-radius: 10px; /* Мягкие углы */
+    border-radius: 10px; 
     transition: all 0.25s ease; 
     text-transform: uppercase;
     background: rgba(255,255,255,0.02);
@@ -190,7 +190,7 @@ button:hover { filter: brightness(1.2); }
     border-color: #3a3a3c !important; 
 }
 
-/* === КРОКОДИЛ (ХОЛСТ) === */
+/* === КРОКОДИЛ (ХОЛСТ И ИНСТРУМЕНТЫ) === */
 .canvas-wrapper { 
     position: relative; 
     background: white; 
@@ -215,15 +215,21 @@ canvas {
     background: #1a1a1b; 
     padding: 10px 15px; 
     display: flex; 
-    gap: 12px; 
+    gap: 15px; 
     align-items: center; 
     justify-content: space-between; 
     border-top: 1px solid var(--border); 
+    flex-wrap: nowrap; /* Инструменты всегда в одну линию */
+}
+
+.palette { 
+    display: flex; 
+    gap: 8px; /* Цвета снова в ряд */
 }
 
 .color-swatch { 
-    width: 28px; 
-    height: 28px; 
+    width: 26px; 
+    height: 26px; 
     border-radius: 50%; 
     cursor: pointer; 
     border: 2px solid transparent; 
@@ -235,7 +241,31 @@ canvas {
     transform: scale(1.2); 
 }
 
+#size-picker { 
+    width: 100px; 
+    cursor: pointer; 
+}
+
+.tool-btn { 
+    background: var(--bg); 
+    border: 1px solid var(--border); 
+    padding: 8px 15px; 
+    border-radius: 6px; 
+    font-size: 0.9rem; 
+    color: white;
+}
+
 /* === ЧАТ И СПИСКИ === */
+.stat-section, .players-section { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+
+.chat-section { 
+    flex: 1.5; 
+    display: flex; 
+    flex-direction: column; 
+    margin: 15px 0; 
+    min-height: 0; 
+}
+
 #chat-box { 
     flex: 1; 
     background: var(--bg); 
@@ -265,7 +295,10 @@ canvas {
 @media (max-width: 850px) {
     .app-container { display: flex; flex-direction: column; height: auto; }
     .side-panel.left { display: none; }
+    .side-panel.right { order: 2; border-top: 2px solid var(--accent); padding: 15px; }
+    .game-core { order: 1; padding: 10px 5px; }
     .tile { width: 50px; height: 50px; font-size: 1.5rem; }
+    .toolbar { flex-wrap: wrap; justify-content: center; }
 }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
