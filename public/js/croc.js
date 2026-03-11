@@ -1,12 +1,13 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let drawing = false, currentColor = '#000000';
-let prevPos = null; // Память о прошлой точке для плавной отрисовки
+let prevPos = null; 
+let currentSetter = ''; // Переменная для хранения имени текущего художника
 
 canvas.addEventListener('pointerdown', (e) => {
     if (!isSetter || myMode !== 'croc') return;
     drawing = true; 
-    prevPos = getPos(e); // Запоминаем точку старта
+    prevPos = getPos(e); 
 });
 
 canvas.addEventListener('pointermove', (e) => {
@@ -14,7 +15,6 @@ canvas.addEventListener('pointermove', (e) => {
     const currentPos = getPos(e);
     const size = document.getElementById('size-picker').value;
     
-    // Отправляем и ПРОШЛУЮ, и ТЕКУЩУЮ координаты
     const data = { 
         prevX: prevPos.x, prevY: prevPos.y, 
         x: currentPos.x, y: currentPos.y, 
@@ -24,7 +24,7 @@ canvas.addEventListener('pointermove', (e) => {
     socket.emit('drawing', data); 
     drawLocal(data);
     
-    prevPos = currentPos; // Обновляем прошлую точку
+    prevPos = currentPos;
 });
 
 window.addEventListener('pointerup', () => {
@@ -33,13 +33,13 @@ window.addEventListener('pointerup', () => {
 });
 
 function drawLocal(data) {
-    ctx.beginPath(); // Обязательно начинаем новый путь!
+    ctx.beginPath();
     ctx.lineWidth = data.size; 
     ctx.lineCap = 'round'; 
-    ctx.lineJoin = 'round'; // Сглаживание изломов линии
+    ctx.lineJoin = 'round';
     ctx.strokeStyle = data.color;
-    ctx.moveTo(data.prevX, data.prevY); // Встаем в прошлую точку
-    ctx.lineTo(data.x, data.y);         // Ведем линию в текущую
+    ctx.moveTo(data.prevX, data.prevY);
+    ctx.lineTo(data.x, data.y);
     ctx.stroke();
 }
 
@@ -62,7 +62,7 @@ function setEraser(el) {
     el.classList.add('active');
 }
 
-// === ЭКРАН ПОБЕДЫ ===
+// === ЭКРАН ПОБЕДЫ И РАЗБЛОКИРОВКА ЧАТА ===
 socket.on('crocWin', ({ word, setter, winner }) => {
     const winScreen = document.getElementById('croc-win-screen');
     winScreen.classList.remove('hidden');
@@ -78,6 +78,12 @@ socket.on('crocWin', ({ word, setter, winner }) => {
         guesserBlock.classList.add('hidden');
     }
 
+    // 🔓 Возвращаем чат всем игрокам после раунда
+    const chatInput = document.getElementById('chat-input');
+    chatInput.disabled = false;
+    chatInput.placeholder = "Сообщение...";
+    chatInput.style.opacity = "1";
+
     let ticks = 5;
     document.getElementById('win-timer').innerText = ticks;
     const iv = setInterval(() => {
@@ -87,6 +93,7 @@ socket.on('crocWin', ({ word, setter, winner }) => {
     }, 1000);
 });
 
+// === ВЫБОР СЛОВА И БЛОКИРОВКА ВВОДА ===
 socket.on('crocSelection', ({ setter, options }) => {
     resetUI(); 
     
@@ -94,12 +101,25 @@ socket.on('crocSelection', ({ setter, options }) => {
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
 
     isSetter = (myNick === setter);
+    currentSetter = setter; // Сохраняем, кто именно сейчас рисует
+    const chatInput = document.getElementById('chat-input');
+
     if (isSetter) {
         document.getElementById('word-picker').classList.remove('hidden');
         document.getElementById('word-options').innerHTML = options.map(w => `<button class="word-btn" onclick="chooseWord('${w}')">${w}</button>`).join('');
         document.getElementById('status-msg').innerText = "Выбирай слово!";
+        
+        // 🔒 Художник видит чат, но не может в него писать
+        chatInput.disabled = true;
+        chatInput.placeholder = "Художник не может писать...";
+        chatInput.style.opacity = "0.5";
     } else {
         document.getElementById('status-msg').innerText = `${setter} выбирает слово...`;
+        
+        // 🔓 Для остальных чат всегда открыт
+        chatInput.disabled = false;
+        chatInput.placeholder = "Сообщение...";
+        chatInput.style.opacity = "1";
     }
 });
 
@@ -109,9 +129,11 @@ function chooseWord(word) {
     socket.emit('wordChosen', word);
 }
 
+// === НАЧАЛО ИГРЫ (ОБНОВЛЕННЫЙ СТАТУС) ===
 socket.on('gameStarted', ({ wordLength }) => {
     if (!isSetter && myMode === 'croc') {
-        document.getElementById('status-msg').innerText = `Угадай (${wordLength} букв)`;
+        // Используем сохраненное имя художника и убираем подсказку про буквы
+        document.getElementById('status-msg').innerText = `${currentSetter} рисует`; 
     }
 });
 

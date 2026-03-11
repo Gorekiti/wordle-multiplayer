@@ -19,7 +19,7 @@ let roomChats = {};
 
 const ROUND_TIME = 80; 
 
-// === НОВЫЙ ОГРОМНЫЙ СЛОВАРЬ ===
+// === ОГРОМНЫЙ СЛОВАРЬ (300 СЛОВ) ===
 const CROC_WORDS = [
     'люди', 'семья', 'музыка', 'идея', 'видео', 'страна', 'фильм', 'парень', 'девушка', 'писательство', 
     'цель', 'ночь', 'химия', 'местоположение', 'математика', 'дерево', 'президент', 'клетка', 'озеро', 
@@ -60,20 +60,37 @@ const CROC_WORDS = [
 
 async function broadcastRoomsList() {
     try {
+        // Мы возвращаем чтение комнат из БД. Без RLS это будет работать безупречно.
         const { data: rooms, error } = await supabase.from('game_rooms').select('*').order('created_at', { ascending: false });
+        
         if (error) {
             console.error("Ошибка БД при загрузке лобби:", error.message);
             return;
         }
+        
         const list = (rooms || []).map(r => ({
             ...r,
-            currentCount: roomPlayers[r.room_id]?.length || 0
+            currentCount: roomPlayers[r.room_id] ? roomPlayers[r.room_id].length : 0
         }));
+        
         io.emit('roomsList', list);
     } catch (err) {
         console.error("Критическая ошибка лобби:", err.message);
     }
 }
+
+// === Очистка "мертвых" комнат при запуске сервера ===
+async function cleanupOldRooms() {
+    try {
+        // Удаляем все комнаты, так как при старте сервера в них точно никого нет
+        const { error } = await supabase.from('game_rooms').delete().not('room_id', 'is', null);
+        if (error) throw error;
+        console.log("🧹 База комнат успешно очищена от старых сессий");
+    } catch (err) {
+        console.error("Ошибка при очистке старых комнат:", err.message);
+    }
+}
+cleanupOldRooms();
 
 io.on('connection', (socket) => {
     socket.on('getRooms', broadcastRoomsList);
