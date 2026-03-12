@@ -55,7 +55,8 @@ body {
 
 .app-container { 
     display: grid; 
-    grid-template-columns: 220px 1fr 280px; 
+    /* Было: 220px 1fr 280px */
+    grid-template-columns: minmax(220px, 15vw) 1fr minmax(280px, 20vw); 
     height: 100vh; 
     width: 100vw; 
     overflow: hidden;
@@ -209,16 +210,16 @@ button:hover { filter: brightness(1.2); }
 
 /* === ХОЛСТ: ФИКС ВЫСОТЫ И ИНСТРУМЕНТЫ СВЕРХУ === */
 .canvas-wrapper {
-    max-width: 950px;
+    width: 95%; /* Занимает почти всё доступное место в центре */
+    max-width: 1400px; /* Сильно увеличили максимальный размер */
     display: flex;
     flex-direction: column;
     background: #1a1a1a;
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-    position: relative; /* <-- ДОБАВЬ ЭТО, чтобы экран победы не улетал за пределы */
+    position: relative; 
 }
-
 .toolbar {
     width: 100%;
     background: #1a1a1a;
@@ -232,7 +233,7 @@ button:hover { filter: brightness(1.2); }
 canvas {
     background: white;
     width: 100%;
-    max-width: 900px;
+    max-width: 100%; /* Убрали жесткие 900px, теперь тянется за враппером */
     aspect-ratio: 9 / 5;
     height: auto;
     max-height: calc(100vh - 200px);
