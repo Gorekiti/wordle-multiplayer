@@ -361,6 +361,17 @@ canvas {
 }
 .correct { background: var(--accent) !important; border-color: var(--accent) !important; box-shadow: 0 4px 15px rgba(83, 141, 78, 0.4); }
 
+/* Добавляем потерянные цвета для Wordle */
+.present { 
+    background: #b59f3b !important; /* Желтый цвет для буквы не на своем месте */
+    border-color: #b59f3b !important; 
+}
+.absent { 
+    background: #3a3a3c !important; /* Темно-серый цвет для отсутствующей буквы */
+    border-color: #3a3a3c !important; 
+    color: #888; /* Делаем саму букву чуть тусклее */
+}
+
 /* === МОБИЛЬНАЯ АДАПТАЦИЯ === */
 @media (max-width: 850px) {
     .app-container { display: flex; flex-direction: column; height: 100vh; }
