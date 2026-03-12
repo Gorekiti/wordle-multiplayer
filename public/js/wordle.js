@@ -102,8 +102,27 @@ function syncGame(session) {
 }
 
 socket.on('gameOver', ({ winner, word }) => {
-    const res = document.getElementById('result-display');
-    res.innerText = `Слово: ${word}`; 
-    res.classList.remove('hidden');
+    // Если слово угадано, принудительно закрашиваем текущую строку зеленым
+    const rows = document.querySelectorAll('.row');
+    if (rows[currentAttempt]) {
+        const tiles = rows[currentAttempt].querySelectorAll('.tile');
+        if (tiles[0] && tiles[0].innerText === '') {
+            word.split('').forEach((char, i) => {
+                if(tiles[i]) {
+                    tiles[i].innerText = char;
+                    tiles[i].classList.add('correct');
+                }
+            });
+        }
+    }
+    
+    // Прячем поле ввода, чтобы больше не писали
     document.getElementById('input-wrapper').classList.add('hidden');
+
+    // Ждем 1.5 секунды (чтобы игрок насладился победой), затем показываем итог
+    setTimeout(() => {
+        const res = document.getElementById('result-display');
+        res.innerText = winner ? `Победитель: ${winner}\nСлово: ${word}` : `Слово: ${word}`; 
+        res.classList.remove('hidden');
+    }, 1500);
 });

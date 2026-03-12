@@ -77,9 +77,30 @@ socket.on('roomUpdate', ({ session, leaders, activePlayers, maxPlayers }) => {
     document.getElementById('game-screen').classList.remove('hidden');
     
     myMode = session.mode;
+    
+    // Добавляем класс для фикса мобильного Wordle
+    if (myMode === 'wordle') document.body.classList.add('wordle-mode');
+    else document.body.classList.remove('wordle-mode');
+
     document.getElementById('leaderboard').innerHTML = leaders.map(p => `<li>${p.nickname}: <b>${p.score}</b></li>`).join('');
     document.getElementById('player-list').innerHTML = activePlayers.map(name => `<li>${name}${name === myNick ? " (Вы)" : ""}</li>`).join('');
     document.getElementById('player-count-badge').innerText = `${activePlayers.length}/${maxPlayers}`;
+
+    // === ЖЕЛЕЗОБЕТОННЫЙ СБРОС, ЕСЛИ ОСТАЛСЯ 1 ИГРОК ===
+    if (session.status === 'waiting') {
+        document.getElementById('status-msg').innerText = "Ожидание игроков...";
+        document.getElementById('setup-zone').classList.add('hidden');
+        document.getElementById('input-wrapper').classList.add('hidden');
+        document.getElementById('word-picker').classList.add('hidden');
+        document.getElementById('croc-win-screen').classList.add('hidden');
+        document.getElementById('result-display').classList.add('hidden');
+        
+        const hintEl = document.getElementById('hint-display');
+        if (hintEl) hintEl.classList.add('hidden');
+        
+        if (myMode === 'croc' && typeof clearCanvas === 'function') clearCanvas();
+        if (myMode === 'wordle' && typeof initPlaceholderGrid === 'function') initPlaceholderGrid();
+    }
 
     if (myMode === 'wordle') {
         document.getElementById('wordle-ui').classList.remove('hidden');

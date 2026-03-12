@@ -272,6 +272,16 @@ socket.on('chatMessage', async (data) => {
                 delete roomChats[roomId]; 
                 await supabase.from('game_rooms').delete().eq('room_id', roomId);
             } else {
+                // === ЕСЛИ ОСТАЛСЯ ТОЛЬКО 1 ИГРОК - СБРАСЫВАЕМ ИГРУ ===
+                if (roomPlayers[roomId].length === 1) {
+                    await supabase.from('game_rooms').update({ status: 'waiting', secret_word: null }).eq('room_id', roomId);
+                    stopTimer(roomId); // Останавливаем таймер
+                    
+                    const resetMsg = { text: `Недостаточно игроков. Игра остановлена.`, type: 'system-info' };
+                    roomChats[roomId].push(resetMsg);
+                    io.to(roomId).emit('chatMessage', resetMsg);
+                }
+
                 const { data: room } = await supabase.from('game_rooms').select('*').eq('room_id', roomId).single();
                 broadcastRoomUpdate(roomId, room);
             }
@@ -285,9 +295,22 @@ function startTimer(roomId, onTimeout) {
     let timeLeft = ROUND_TIME;
     io.to(roomId).emit('timer', timeLeft);
     
-    roomTimers[roomId] = setInterval(() => {
+    // Сделали коллбэк асинхронным (async), чтобы делать запросы к базе
+    roomTimers[roomId] = setInterval(async () => {
         timeLeft--;
         io.to(roomId).emit('timer', timeLeft);
+
+        // === ПОДСКАЗКА НА 35 СЕКУНДЕ ===
+        if (timeLeft === 35) {
+            const { data: room } = await supabase.from('game_rooms').select('secret_word, mode').eq('room_id', roomId).single();
+            if (room && room.mode === 'croc' && room.secret_word) {
+                let wordArr = room.secret_word.split('');
+                // Открываем каждую вторую букву (четные индексы), остальные меняем на '_'
+                let hintStr = wordArr.map((char, index) => (index % 2 === 0 ? char : '_')).join(' ');
+                io.to(roomId).emit('crocHint', `Подсказка: ${hintStr}`);
+            }
+        }
+
         if (timeLeft <= 0) {
             stopTimer(roomId);
             onTimeout();

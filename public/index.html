@@ -54,11 +54,12 @@
                 <h3 id="hint-display" class="hidden" style="letter-spacing: 5px; color: var(--accent); margin: 5px 0 15px 0;"></h3>
                 
                 <div id="wordle-ui" class="hidden game-box">
+                    <div id="grid-zone"><div id="grid"></div></div>
+                    
                     <div id="setup-zone" class="hidden input-group">
                         <input type="text" id="secret-word" placeholder="Загадай слово (2-10)">
                         <button onclick="sendSecret()">Загадать</button>
                     </div>
-                    <div id="grid-zone"><div id="grid"></div></div>
                     <div id="input-wrapper" class="hidden input-group">
                         <input type="text" id="guess-input" placeholder="Твой ответ">
                         <button onclick="sendGuess()">OK</button>

@@ -486,4 +486,29 @@ canvas {
     background-color: var(--accent); /* Загорается твоим зеленым акцентным цветом! */
 }
 
+/* Выравнивание полей ввода в Wordle под сеткой */
+.input-group {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    max-width: 400px;
+    margin: 20px auto 0;
+}
+.input-group input { flex: 1; }
+
+/* Фикс прыгающего холста и текста в Крокодиле */
+#status-msg { margin-bottom: 5px; } /* Поднимаем статус чуть выше */
+#hint-display { 
+    margin-bottom: 15px; 
+    font-size: 1.2rem; 
+    min-height: 24px; /* Холст не будет прыгать, когда появляется подсказка */
+}
+
+/* Фикс мобильного интерфейса для Wordle (убираем пустую нижнюю панель) */
+@media (max-width: 850px) {
+    body.wordle-mode .side-panel.right {
+        display: none !important;
+    }
+}
+
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
