@@ -275,7 +275,11 @@ socket.on('chatMessage', async (data) => {
                 // === ЕСЛИ ОСТАЛСЯ ТОЛЬКО 1 ИГРОК - СБРАСЫВАЕМ ИГРУ ===
                 if (roomPlayers[roomId].length === 1) {
                     await supabase.from('game_rooms').update({ status: 'waiting', secret_word: null }).eq('room_id', roomId);
-                    stopTimer(roomId); // Останавливаем таймер
+                    stopTimer(roomId);
+                    
+                    // --- ОБНУЛЯЕМ ТАЙМЕР И ПРЯЧЕМ ПОДСКАЗКУ У ИГРОКА ---
+                    io.to(roomId).emit('timer', ROUND_TIME); // Возвращаем визуально на 01:20
+                    io.to(roomId).emit('crocHint', ''); // Прячем подсказку
                     
                     const resetMsg = { text: `Недостаточно игроков. Игра остановлена.`, type: 'system-info' };
                     roomChats[roomId].push(resetMsg);
@@ -294,21 +298,53 @@ function startTimer(roomId, onTimeout) {
     stopTimer(roomId);
     let timeLeft = ROUND_TIME;
     io.to(roomId).emit('timer', timeLeft);
+
+    let secretWord = "";
+    let revealed = [];
+    let revealTimes = [];
+
+    // Асинхронно достаем слово из БД и считаем график подсказок
+    supabase.from('game_rooms').select('secret_word, mode').eq('room_id', roomId).single()
+    .then(({ data: room }) => {
+        if (room && room.mode === 'croc' && room.secret_word) {
+            secretWord = room.secret_word;
+            let len = secretWord.length;
+            
+            // Открываем ровно половину букв
+            let revealCount = Math.floor(len * 0.7);
+            let timeWindow = 25; // Распределяем время открытия с 50 до 10 сек
+            
+            for (let i = 0; i < revealCount; i++) {
+                // Высчитываем точную секунду для каждой буквы
+                let t = 35 - Math.floor((timeWindow / revealCount) * i);
+                revealTimes.push(t);
+            }
+        }
+    });
     
-    // Сделали коллбэк асинхронным (async), чтобы делать запросы к базе
-    roomTimers[roomId] = setInterval(async () => {
+    roomTimers[roomId] = setInterval(() => {
         timeLeft--;
         io.to(roomId).emit('timer', timeLeft);
 
-        // === ПОДСКАЗКА НА 35 СЕКУНДЕ ===
-        if (timeLeft === 35) {
-            const { data: room } = await supabase.from('game_rooms').select('secret_word, mode').eq('room_id', roomId).single();
-            if (room && room.mode === 'croc' && room.secret_word) {
-                let wordArr = room.secret_word.split('');
-                // Открываем каждую вторую букву (четные индексы), остальные меняем на '_'
-                let hintStr = wordArr.map((char, index) => (index % 2 === 0 ? char : '_')).join(' ');
-                io.to(roomId).emit('crocHint', `Подсказка: ${hintStr}`);
+        // === ПЛАВНОЕ ОТКРЫТИЕ СЛУЧАЙНЫХ БУКВ ===
+        if (secretWord && revealTimes.includes(timeLeft)) {
+            let unrevealed = [];
+            for (let i = 0; i < secretWord.length; i++) {
+                if (!revealed.includes(i) && secretWord[i] !== ' ') unrevealed.push(i);
             }
+            // Выбираем случайную закрытую букву
+            if (unrevealed.length > 0) {
+                let randIdx = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+                revealed.push(randIdx);
+            }
+
+            // Строим строку подсказки
+            let hintStr = secretWord.split('').map((char, index) => {
+                if (char === ' ') return '  ';
+                return revealed.includes(index) ? char : '_';
+            }).join(' ');
+
+            io.to(roomId).emit('crocHint', `Подсказка: ${hintStr}`);
         }
 
         if (timeLeft <= 0) {

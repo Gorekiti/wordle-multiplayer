@@ -154,8 +154,15 @@ socket.on('gameStarted', () => {
 // === ПОКАЗ ПОДСКАЗОК ===
 socket.on('crocHint', (hint) => {
     const hintEl = document.getElementById('hint-display');
-    hintEl.innerText = hint;
-    hintEl.classList.remove('hidden');
+    if (hintEl) {
+        if (hint) {
+            hintEl.innerText = hint;
+            hintEl.classList.remove('hidden');
+        } else {
+            // Если пришла пустая строка - прячем подсказку
+            hintEl.classList.add('hidden');
+        }
+    }
 });
 
 socket.on('drawing', (data) => drawLocal(data));

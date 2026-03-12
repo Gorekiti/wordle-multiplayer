@@ -1,10 +1,16 @@
 const socket = io();
 let roomId = new URLSearchParams(window.location.search).get('room');
+
+// Загружаем ник и цвет из памяти (или ставим зеленый по умолчанию)
 let myMode = '', myNick = localStorage.getItem('wordle-nick') || '';
+let myColor = localStorage.getItem('wordle-color') || '#538d4e'; 
 let isSetter = false;
 let isGuesser = false; 
 
+// Подставляем сохраненные данные в поля
 if (myNick) document.getElementById('nick-input').value = myNick;
+const colorInput = document.getElementById('nick-color');
+if (colorInput) colorInput.value = myColor;
 
 if (roomId) {
     if (myNick && myNick.length >= 2) {
@@ -19,8 +25,13 @@ if (roomId) {
 
 function joinFromUrl() {
     myNick = document.getElementById('nick-input').value.trim();
+    const selectedColor = document.getElementById('nick-color')?.value || '#538d4e'; // Берем цвет
     if (!myNick) return showNotify("Введите ник!", "error");
+    
+    // Сохраняем в память
     localStorage.setItem('wordle-nick', myNick);
+    localStorage.setItem('wordle-color', selectedColor);
+    
     document.getElementById('auth-screen').classList.add('hidden');
     socket.emit('joinRoom', { roomId, nickname: myNick });
 }
@@ -28,12 +39,15 @@ function joinFromUrl() {
 function openLobby(mode) {
     myMode = mode;
     myNick = document.getElementById('nick-input').value.trim();
+    const selectedColor = document.getElementById('nick-color')?.value || '#538d4e'; // Берем цвет
     if (!myNick) return showNotify("Введите ник!", "error");
+    
+    // Сохраняем в память
     localStorage.setItem('wordle-nick', myNick);
+    localStorage.setItem('wordle-color', selectedColor);
+    
     document.getElementById('auth-screen').classList.add('hidden');
     document.getElementById('lobby-screen').classList.remove('hidden');
-    
-    // Запрашиваем лобби 1 раз, дальше сервер будет сам присылать обновления
     socket.emit('getRooms');
 }
 
