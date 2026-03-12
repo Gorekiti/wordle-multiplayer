@@ -317,11 +317,20 @@ canvas {
     flex: 1; 
     background: var(--bg); 
     padding: 10px; 
-    overflow-y: auto;  /* Оставляем скролл */
+    overflow-y: auto;  
+    overflow-x: hidden; /* <-- Убирает горизонтальный скролл */
     border: 1px solid var(--border); 
     border-radius: 8px; 
     margin-bottom: 10px; 
-    height: 0;         /* <-- МАГИЯ ФЛЕКСБОКСА: заставляет блок считать свою высоту от родителя, а не от содержимого */
+    height: 0;         
+    word-wrap: break-word; /* <-- Переносит длинные слова */
+}
+
+/* Запрещаем словам ломать ширину чата */
+.chat-msg, .chat-sys {
+    word-break: break-word;
+    white-space: pre-wrap;
+    max-width: 100%;
 }
 
 .scroll-list {

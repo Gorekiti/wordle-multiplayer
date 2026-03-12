@@ -212,41 +212,48 @@ io.on('connection', (socket) => {
         });
     });
 
-    socket.on('chatMessage', async (text) => {
-        const { data: room } = await supabase.from('game_rooms').select('*').eq('room_id', socket.roomId).single();
-        if (!room) return;
-        
-        if (room.mode === 'croc' && room.status === 'playing' && socket.nickname !== room.setter_nick) {
-            if (text.toLowerCase().trim() === room.secret_word?.toLowerCase()) {
-                
-                const guessMsg = { nick: socket.nickname, text: text };
-                roomChats[socket.roomId].push(guessMsg);
-                io.to(socket.roomId).emit('chatMessage', guessMsg);
+    // Заменили (text) на (data)
+socket.on('chatMessage', async (data) => {
+    // Теперь всё сработает правильно
+    const text = data.text || data; 
+    const color = data.color || '#ffffff';
+    
+    const { data: room } = await supabase.from('game_rooms').select('*').eq('room_id', socket.roomId).single();
+    if (!room) return;
+    
+    if (room.mode === 'croc' && room.status === 'playing' && socket.nickname !== room.setter_nick) {
+        if (text.toLowerCase().trim() === room.secret_word?.toLowerCase()) {
+            
+            // 1. ДОБАВИЛИ ЦВЕТ СЮДА (когда игрок угадал слово, но его ответ всё равно летит в чат)
+            const guessMsg = { nick: socket.nickname, text: text, color: color };
+            roomChats[socket.roomId].push(guessMsg);
+            io.to(socket.roomId).emit('chatMessage', guessMsg);
 
-                await supabase.from('game_rooms').update({ status: 'ended' }).eq('room_id', socket.roomId);
-                
-                if (!roomScores[socket.roomId]) roomScores[socket.roomId] = {};
-                if (!roomScores[socket.roomId][socket.nickname]) roomScores[socket.roomId][socket.nickname] = 0;
-                
-                roomScores[socket.roomId][socket.nickname] += 1;
-                broadcastRoomUpdate(socket.roomId, room);
-                stopTimer(socket.roomId);
-                
-                const winMsg = { text: `🎉 ${socket.nickname} угадал слово!`, type: 'system-win' };
-                roomChats[socket.roomId].push(winMsg);
-                io.to(socket.roomId).emit('chatMessage', winMsg);
-                
-                io.to(socket.roomId).emit('crocWin', { word: room.secret_word, setter: room.setter_nick, winner: socket.nickname });
+            await supabase.from('game_rooms').update({ status: 'ended' }).eq('room_id', socket.roomId);
+            
+            if (!roomScores[socket.roomId]) roomScores[socket.roomId] = {};
+            if (!roomScores[socket.roomId][socket.nickname]) roomScores[socket.roomId][socket.nickname] = 0;
+            
+            roomScores[socket.roomId][socket.nickname] += 1;
+            broadcastRoomUpdate(socket.roomId, room);
+            stopTimer(socket.roomId);
+            
+            const winMsg = { text: `🎉 ${socket.nickname} угадал слово!`, type: 'system-win' };
+            roomChats[socket.roomId].push(winMsg);
+            io.to(socket.roomId).emit('chatMessage', winMsg);
+            
+            io.to(socket.roomId).emit('crocWin', { word: room.secret_word, setter: room.setter_nick, winner: socket.nickname });
 
-                setTimeout(() => startCrocSelection(socket.roomId), 5000);
-                return;
-            }
+            setTimeout(() => startCrocSelection(socket.roomId), 5000);
+            return;
         }
-        
-        const normalMsg = { nick: socket.nickname, text };
-        roomChats[socket.roomId].push(normalMsg);
-        io.to(socket.roomId).emit('chatMessage', normalMsg);
-    });
+    }
+    
+    // 2. ДОБАВИЛИ ЦВЕТ СЮДА (для всех обычных сообщений)
+    const normalMsg = { nick: socket.nickname, text: text, color: color };
+    roomChats[socket.roomId].push(normalMsg);
+    io.to(socket.roomId).emit('chatMessage', normalMsg);
+});
 
     socket.on('disconnect', async () => {
         const roomId = socket.roomId;

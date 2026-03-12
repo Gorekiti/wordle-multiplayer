@@ -1,5 +1,14 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+
+// ЯДЕРНАЯ БЛОКИРОВКА СКРОЛЛА ПЕРОМ
+canvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+canvas.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
+
+// И на всякий случай блокируем контекстное меню при долгом нажатии пером
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
 let drawing = false, currentColor = '#000000';
 let prevPos = null; 
 let currentSetter = ''; // Переменная для хранения имени текущего художника
@@ -96,29 +105,32 @@ socket.on('crocWin', ({ word, setter, winner }) => {
 // === ВЫБОР СЛОВА (ЦЕНТРАЛЬНАЯ МОДАЛКА) И БЛОКИРОВКА ВВОДА ===
 socket.on('crocSelection', ({ setter, options }) => {
     resetUI(); 
-    
     document.getElementById('croc-win-screen').classList.add('hidden');
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
 
     isSetter = (myNick === setter);
-    currentSetter = setter; // Запоминаем, кто рисует
+    currentSetter = setter; 
+    
     const chatInput = document.getElementById('chat-input');
+    const tools = document.getElementById('croc-tools');
+    const hintDisplay = document.getElementById('hint-display');
+    
+    hintDisplay.classList.add('hidden'); // Прячем подсказку в начале раунда
 
     if (isSetter) {
-        // Показываем центрированную модалку из HTML
+        tools.classList.remove('hidden'); // ПОКАЗЫВАЕМ инструменты художнику
         const picker = document.getElementById('word-picker');
         picker.classList.remove('hidden');
         document.getElementById('word-options').innerHTML = options.map(w => `<button class="word-btn" onclick="chooseWord('${w}')">${w}</button>`).join('');
         document.getElementById('status-msg').innerText = "Выбирай слово!";
         
-        // 🔒 Блокируем чат для художника
         chatInput.disabled = true;
         chatInput.placeholder = "Художник не может писать...";
         chatInput.style.opacity = "0.5";
     } else {
+        tools.classList.add('hidden'); // ПРЯЧЕМ инструменты у отгадывающих
         document.getElementById('status-msg').innerText = `${setter} выбирает слово...`;
         
-        // 🔓 Для остальных чат всегда открыт
         chatInput.disabled = false;
         chatInput.placeholder = "Сообщение...";
         chatInput.style.opacity = "1";
@@ -137,6 +149,13 @@ socket.on('gameStarted', () => {
         // Выводим имя художника без подсказок
         document.getElementById('status-msg').innerText = `${currentSetter} рисует`; 
     }
+});
+
+// === ПОКАЗ ПОДСКАЗОК ===
+socket.on('crocHint', (hint) => {
+    const hintEl = document.getElementById('hint-display');
+    hintEl.innerText = hint;
+    hintEl.classList.remove('hidden');
 });
 
 socket.on('drawing', (data) => drawLocal(data));

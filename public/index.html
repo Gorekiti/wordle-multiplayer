@@ -14,7 +14,11 @@
     <div id="auth-screen" class="screen">
         <div class="box main-auth">
             <h1 class="logo-text">Kiti<span>Games</span></h1>
-            <input type="text" id="nick-input" placeholder="Введите ваш ник...">
+            <div class="nick-row" style="display: flex; gap: 10px; margin-bottom: 15px; justify-content: center;">
+                <input type="color" id="nick-color" value="#538d4e" title="Цвет ника" style="width: 40px; height: 40px; padding: 0; border: none; border-radius: 8px; cursor: pointer; background: transparent;">
+                <input type="text" id="nick-input" placeholder="Введите ваш ник..." maxlength="10">
+            </div>
+
             <div class="mode-select">
                 <button class="mode-btn wordle" onclick="openLobby('wordle')">Wordle 1x1</button>
                 <button class="mode-btn croc" onclick="openLobby('croc')">Крокодил</button>
@@ -47,6 +51,7 @@
                 <div id="timer-display" class="timer-bar">01:20</div>
                 <div id="result-display" class="hidden"></div>
                 <h2 id="status-msg">Ожидание...</h2>
+                <h3 id="hint-display" class="hidden" style="letter-spacing: 5px; color: var(--accent); margin: 5px 0 15px 0;"></h3>
                 
                 <div id="wordle-ui" class="hidden game-box">
                     <div id="setup-zone" class="hidden input-group">
@@ -105,7 +110,7 @@
                 <div class="chat-section" id="chat-container">
                     <h3>💬 Чат</h3>
                     <div id="chat-box"></div>
-                    <input type="text" id="chat-input" placeholder="Сообщение...">
+                    <input type="text" id="chat-input" placeholder="Сообщение..." maxlength="100">
                 </div>
 
                 <button class="invite-btn" onclick="copyRoomLink()">🔗 Ссылка</button>
