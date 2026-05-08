@@ -11,17 +11,25 @@
 <body>
     <div id="toast-container"></div>
 
+    <div class="server-selector" style="position: absolute; top: 20px; right: 25px; display: flex; align-items: center; gap: 8px; font-size: 1.2rem; z-index: 100;">
+        🌍 <select id="region-select" onchange="changeLanguage(this.value)" style="background: var(--panel); color: white; border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; outline: none;">
+            <option value="ru">🇷🇺 RU</option>
+            <option value="ua">🇺🇦 UA</option>
+            <option value="en">🇬🇧 EN</option>
+        </select>
+    </div>
+
     <div id="auth-screen" class="screen">
         <div class="box main-auth">
             <h1 class="logo-text">Kiti<span>Games</span></h1>
             <div class="nick-row" style="display: flex; gap: 10px; margin-bottom: 15px; justify-content: center;">
                 <input type="color" id="nick-color" value="#538d4e" title="Цвет ника" style="width: 40px; height: 40px; padding: 0; border: none; border-radius: 8px; cursor: pointer; background: transparent;">
-                <input type="text" id="nick-input" placeholder="Введите ваш ник..." maxlength="10">
+                <input type="text" id="nick-input" data-i18n-placeholder="nickPlaceholder" placeholder="Введите ваш ник..." maxlength="10">
             </div>
 
             <div class="mode-select">
                 <button class="mode-btn wordle" onclick="openLobby('wordle')">Wordle 1x1</button>
-                <button class="mode-btn croc" onclick="openLobby('croc')">Крокодил</button>
+                <button class="mode-btn croc" data-i18n="crocBtn" onclick="openLobby('croc')">Крокодил</button>
             </div>
         </div>
     </div>
@@ -30,8 +38,8 @@
         <div class="lobby-container">
             <header class="lobby-header">
                 <button class="icon-btn" onclick="goHome()">🏠</button>
-                <h2 id="lobby-title">Лобби</h2>
-                <button class="create-btn" onclick="createRoom()">+ Создать</button>
+                <h2 id="lobby-title" data-i18n="lobbyTitle">Лобби</h2>
+                <button class="create-btn" data-i18n="createBtn" onclick="createRoom()">+ Создать</button>
             </header>
             <div id="rooms-list" class="rooms-grid"></div>
         </div>
@@ -40,9 +48,9 @@
     <div id="game-screen" class="screen hidden">
         <div class="app-container">
             <aside class="side-panel left">
-                <button class="home-btn" onclick="goHome()">🏠 На главную</button>
+                <button class="home-btn" data-i18n="homeBtn" onclick="goHome()">🏠 На главную</button>
                 <div class="stat-section">
-                    <h3>🏆 Рейтинг комнаты</h3>
+                    <h3 data-i18n="ratingTitle">🏆 Рейтинг комнаты</h3>
                     <ul id="leaderboard" class="scroll-list"></ul>
                 </div>
             </aside>
@@ -50,7 +58,7 @@
             <main class="game-core">
                 <div id="timer-display" class="timer-bar">01:20</div>
                 <div id="result-display" class="hidden"></div>
-                <h2 id="status-msg">Ожидание...</h2>
+                <h2 id="status-msg" data-i18n="waiting">Ожидание...</h2>
                 <h3 id="hint-display" class="hidden" style="letter-spacing: 5px; color: var(--accent); margin: 5px 0 15px 0;"></h3>
                 
                 <div id="wordle-ui" class="hidden game-box">
@@ -68,7 +76,7 @@
 
                 <div id="croc-ui" class="hidden game-box">
                     <div id="word-picker" class="hidden modal">
-                        <h3>Выбери слово:</h3>
+                        <h3 data-i18n="chooseWord">Выбери слово:</h3>
                         <div id="word-options" class="options-row"></div>
                     </div>
                     <div class="canvas-wrapper">
@@ -81,8 +89,8 @@
                                 <div class="color-swatch" style="background:#f1c40f" onclick="setColor('#f1c40f', this)"></div>
                             </div>
                             <input type="range" id="size-picker" min="1" max="25" value="5">
-                            <button class="tool-btn" onclick="setEraser(this)">🧽 Ластик</button>
-                            <button class="tool-btn" onclick="clearCanvas()">🗑 Сброс</button>
+                            <button class="tool-btn" data-i18n="eraser" onclick="setEraser(this)">🧽 Ластик</button>
+                            <button class="tool-btn" data-i18n="clear" onclick="clearCanvas()">🗑 Сброс</button>
                         </div>
 
                         <canvas id="canvas" width="900" height="600"></canvas>
@@ -90,9 +98,9 @@
                         <div id="croc-win-screen" class="hidden">
                             <div class="win-content">
                                 <h2 id="win-word">СЛОВО</h2>
-                                <p class="win-player">🖌️ Рисовал(а): <span id="win-setter"></span></p>
-                                <p class="win-player" id="win-guesser-block">🏆 Угадал(а): <span id="win-guesser"></span></p>
-                                <div class="win-timer-block">⏱ След. раунд: <span id="win-timer">5</span></div>
+                                <p class="win-player">🖌️ <span data-i18n="drew">Рисовал(а):</span> <span id="win-setter"></span></p>
+                                <p class="win-player" id="win-guesser-block">🏆 <span data-i18n="guessed">Угадал(а):</span> <span id="win-guesser"></span></p>
+                                <div class="win-timer-block">⏱ <span data-i18n="nextRound">След. раунд:</span> <span id="win-timer">5</span></div>
                             </div>
                         </div>
                     </div>
@@ -102,19 +110,19 @@
             <aside class="side-panel right">
                 <div class="players-section">
                     <div class="flex-header">
-                        <h3>👥 Игроки</h3>
+                        <h3 data-i18n="playersTitle">👥 Игроки</h3>
                         <span id="player-count-badge" class="badge">0/0</span>
                     </div>
                     <ul id="player-list" class="scroll-list player-chips"></ul>
                 </div>
                 
                 <div class="chat-section" id="chat-container">
-                    <h3>💬 Чат</h3>
+                    <h3 data-i18n="chatTitle">💬 Чат</h3>
                     <div id="chat-box"></div>
-                    <input type="text" id="chat-input" placeholder="Сообщение..." maxlength="100">
+                    <input type="text" id="chat-input" data-i18n-placeholder="chatPlaceholder" placeholder="Сообщение..." maxlength="100">
                 </div>
 
-                <button class="invite-btn" onclick="copyRoomLink()">🔗 Ссылка</button>
+                <button class="invite-btn" data-i18n="copyBtn" onclick="copyRoomLink()">🔗 Ссылка</button>
             </aside>
         </div>
     </div>

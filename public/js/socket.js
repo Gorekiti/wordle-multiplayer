@@ -1,13 +1,59 @@
 const socket = io();
 let roomId = new URLSearchParams(window.location.search).get('room');
 
-// Загружаем ник и цвет из памяти (или ставим зеленый по умолчанию)
+// Загружаем данные из памяти
 let myMode = '', myNick = localStorage.getItem('wordle-nick') || '';
 let myColor = localStorage.getItem('wordle-color') || '#538d4e'; 
+let currentRegion = localStorage.getItem('game-region') || 'ru'; // ДОБАВЛЕН РЕГИОН
 let isSetter = false;
 let isGuesser = false; 
 
-// Подставляем сохраненные данные в поля
+// === СЛОВАРЬ ПЕРЕВОДОВ ИНТЕРФЕЙСА ===
+const i18n = {
+    ru: {
+        nickPlaceholder: "Введите ваш ник...", crocBtn: "Крокодил", lobbyTitle: "Лобби", createBtn: "+ Создать",
+        homeBtn: "🏠 На главную", ratingTitle: "🏆 Рейтинг", waiting: "Ожидание...", chooseWord: "Выбери слово:",
+        drew: "Рисовал(а):", guessed: "Угадал(а):", nextRound: "След. раунд через:", eraser: "🧽 Ластик", clear: "🗑 Сброс",
+        playersTitle: "👥 Игроки", chatTitle: "💬 Чат", chatPlaceholder: "Сообщение...", copyBtn: "🔗 Ссылка",
+        emptyLobby: "Нет открытых комнат. Создай свою!", fullBtn: "Заполнена", joinBtn: "Войти"
+    },
+    ua: {
+        nickPlaceholder: "Введіть ваш нік...", crocBtn: "Крокодил", lobbyTitle: "Лобі", createBtn: "+ Створити",
+        homeBtn: "🏠 На головну", ratingTitle: "🏆 Рейтинг", waiting: "Очікування...", chooseWord: "Обери слово:",
+        drew: "Малював(ла):", guessed: "Вгадав(ла):", nextRound: "Наст. раунд через:", eraser: "🧽 Гумка", clear: "🗑 Скинути",
+        playersTitle: "👥 Гравці", chatTitle: "💬 Чат", chatPlaceholder: "Повідомлення...", copyBtn: "🔗 Лінк",
+        emptyLobby: "Немає відкритих кімнат. Створи свою!", fullBtn: "Заповнена", joinBtn: "Увійти"
+    },
+    en: {
+        nickPlaceholder: "Enter nickname...", crocBtn: "Charades", lobbyTitle: "Lobby", createBtn: "+ Create",
+        homeBtn: "🏠 Home", ratingTitle: "🏆 Ranking", waiting: "Waiting...", chooseWord: "Choose a word:",
+        drew: "Drew:", guessed: "Guessed:", nextRound: "Next round in:", eraser: "🧽 Eraser", clear: "🗑 Clear",
+        playersTitle: "👥 Players", chatTitle: "💬 Chat", chatPlaceholder: "Message...", copyBtn: "🔗 Link",
+        emptyLobby: "No rooms. Create one!", fullBtn: "Full", joinBtn: "Join"
+    }
+};
+
+// Функция перевода
+function changeLanguage(lang) {
+    currentRegion = lang;
+    localStorage.setItem('game-region', lang);
+    
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.innerHTML = i18n[lang][el.getAttribute('data-i18n')];
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        el.placeholder = i18n[lang][el.getAttribute('data-i18n-placeholder')];
+    });
+
+    if (!document.getElementById('lobby-screen').classList.contains('hidden')) {
+        socket.emit('getRooms');
+    }
+}
+
+// Инициализация при старте
+document.getElementById('region-select').value = currentRegion;
+changeLanguage(currentRegion);
+
 if (myNick) document.getElementById('nick-input').value = myNick;
 const colorInput = document.getElementById('nick-color');
 if (colorInput) colorInput.value = myColor;
@@ -25,10 +71,9 @@ if (roomId) {
 
 function joinFromUrl() {
     myNick = document.getElementById('nick-input').value.trim();
-    const selectedColor = document.getElementById('nick-color')?.value || '#538d4e'; // Берем цвет
+    const selectedColor = document.getElementById('nick-color')?.value || '#538d4e'; 
     if (!myNick) return showNotify("Введите ник!", "error");
     
-    // Сохраняем в память
     localStorage.setItem('wordle-nick', myNick);
     localStorage.setItem('wordle-color', selectedColor);
     
@@ -39,35 +84,38 @@ function joinFromUrl() {
 function openLobby(mode) {
     myMode = mode;
     myNick = document.getElementById('nick-input').value.trim();
-    const selectedColor = document.getElementById('nick-color')?.value || '#538d4e'; // Берем цвет
+    const selectedColor = document.getElementById('nick-color')?.value || '#538d4e'; 
     if (!myNick) return showNotify("Введите ник!", "error");
     
-    // Сохраняем в память
     localStorage.setItem('wordle-nick', myNick);
     localStorage.setItem('wordle-color', selectedColor);
     
     document.getElementById('auth-screen').classList.add('hidden');
     document.getElementById('lobby-screen').classList.remove('hidden');
+    
+    document.getElementById('rooms-list').innerHTML = `<p style="text-align: center; width: 100%; color: var(--accent); margin-top: 20px; font-weight: bold;">⏳ ...</p>`;
     socket.emit('getRooms');
 }
 
 socket.on('roomsList', (rooms) => {
     const list = document.getElementById('rooms-list');
-    const filteredRooms = rooms.filter(r => r.mode === myMode);
+    
+    // ФИЛЬТРУЕМ КОМНАТЫ ПО РЕЖИМУ И РЕГИОНУ!
+    const filteredRooms = rooms.filter(r => r.mode === myMode && r.region === currentRegion);
     
     if (filteredRooms.length === 0) {
-        list.innerHTML = `<p style="text-align: center; width: 100%; color: #aaa; margin-top: 20px;">Нет открытых комнат. Создай свою!</p>`;
+        list.innerHTML = `<p style="text-align: center; width: 100%; color: #aaa; margin-top: 20px;">${i18n[currentRegion].emptyLobby}</p>`;
         return;
     }
 
     list.innerHTML = filteredRooms.map(r => `
         <div class="room-card">
             <div class="room-info">
-                <h3>Комната: ${r.creator_nick || 'Неизвестно'}</h3>
-                <p>Игроков: <span class="badge">${r.currentCount}/${r.max_players}</span></p>
+                <h3>Room: ${r.creator_nick || '?'}</h3>
+                <p>${i18n[currentRegion].playersTitle}: <span class="badge">${r.currentCount}/${r.max_players}</span></p>
             </div>
             <button class="join-btn" ${r.currentCount >= r.max_players ? 'disabled style="background:#3a3a3c"' : ''} onclick="join('${r.room_id}')">
-                ${r.currentCount >= r.max_players ? 'Заполнена' : 'Войти'}
+                ${r.currentCount >= r.max_players ? i18n[currentRegion].fullBtn : i18n[currentRegion].joinBtn}
             </button>
         </div>
     `).join('');
@@ -83,16 +131,20 @@ socket.on('joinError', (msg) => {
     setTimeout(() => goHome(), 2000); 
 });
 
-function createRoom() { socket.emit('createRoom', { mode: myMode, nickname: myNick }); }
+// ОТПРАВЛЯЕМ РЕГИОН НА СЕРВЕР ПРИ СОЗДАНИИ
+function createRoom() { 
+    socket.emit('createRoom', { mode: myMode, nickname: myNick, region: currentRegion }); 
+}
+
 socket.on('roomCreated', (id) => join(id));
 
 socket.on('roomUpdate', ({ session, leaders, activePlayers, maxPlayers }) => {
     document.getElementById('lobby-screen').classList.add('hidden');
     document.getElementById('game-screen').classList.remove('hidden');
+    document.querySelector('.server-selector').classList.add('hidden'); // Прячем глобус в игре
     
     myMode = session.mode;
     
-    // Добавляем класс для фикса мобильного Wordle
     if (myMode === 'wordle') document.body.classList.add('wordle-mode');
     else document.body.classList.remove('wordle-mode');
 
@@ -100,9 +152,9 @@ socket.on('roomUpdate', ({ session, leaders, activePlayers, maxPlayers }) => {
     document.getElementById('player-list').innerHTML = activePlayers.map(name => `<li>${name}${name === myNick ? " (Вы)" : ""}</li>`).join('');
     document.getElementById('player-count-badge').innerText = `${activePlayers.length}/${maxPlayers}`;
 
-    // === ЖЕЛЕЗОБЕТОННЫЙ СБРОС, ЕСЛИ ОСТАЛСЯ 1 ИГРОК ===
     if (session.status === 'waiting') {
-        document.getElementById('status-msg').innerText = "Ожидание игроков...";
+        const txt = currentRegion === 'en' ? 'Waiting...' : (currentRegion === 'ua' ? 'Очікування...' : 'Ожидание...');
+        document.getElementById('status-msg').innerText = txt;
         document.getElementById('setup-zone').classList.add('hidden');
         document.getElementById('input-wrapper').classList.add('hidden');
         document.getElementById('word-picker').classList.add('hidden');
@@ -119,7 +171,6 @@ socket.on('roomUpdate', ({ session, leaders, activePlayers, maxPlayers }) => {
     if (myMode === 'wordle') {
         document.getElementById('wordle-ui').classList.remove('hidden');
         document.getElementById('croc-ui').classList.add('hidden');
-        
         document.getElementById('timer-display').classList.add('hidden');
         document.getElementById('chat-container').classList.add('hidden');
         
@@ -128,7 +179,6 @@ socket.on('roomUpdate', ({ session, leaders, activePlayers, maxPlayers }) => {
     } else {
         document.getElementById('croc-ui').classList.remove('hidden');
         document.getElementById('wordle-ui').classList.add('hidden');
-        
         document.getElementById('timer-display').classList.remove('hidden');
         document.getElementById('chat-container').classList.remove('hidden');
     }
@@ -137,7 +187,10 @@ socket.on('roomUpdate', ({ session, leaders, activePlayers, maxPlayers }) => {
 socket.on('gameStart', ({ setter, guesser }) => {
     resetUI(); 
     isSetter = (myNick === setter);
-    document.getElementById('status-msg').innerText = isSetter ? `Загадай слово для ${guesser}` : `Ждем слово от ${setter}...`;
+    const txt = currentRegion === 'en' ? 'Waiting for word...' : (currentRegion === 'ua' ? 'Очікуємо слово...' : 'Ждем слово...');
+    const txtSet = currentRegion === 'en' ? 'Choose a word!' : (currentRegion === 'ua' ? 'Загадай слово!' : 'Загадай слово!');
+    
+    document.getElementById('status-msg').innerText = isSetter ? txtSet : txt;
     if (isSetter) document.getElementById('setup-zone').classList.remove('hidden');
     if (myMode === 'wordle' && typeof initPlaceholderGrid === 'function') initPlaceholderGrid();
 });
