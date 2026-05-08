@@ -21,7 +21,6 @@ let roomRegions = {};
 const ROUND_TIME = 80; 
 
 // СЛОВАРЬ 
-// === ОГРОМНЫЙ СЛОВАРЬ (1200+ СЛОВ ДЛЯ 3 РЕГИОНОВ) ===
 const CROC_WORDS = {
     ru: [ 
         'кот', 'собака', 'пицца', 'телефон', 'ноутбук', 'зарядка', 'повербанк', 'ютуб', 'тикток', 'майнкрафт', 
@@ -126,6 +125,13 @@ const CROC_WORDS = {
     ]
 };
 
+// СЛОВАРЬ СИСТЕМНЫХ СООБЩЕНИЙ
+const SYS_MSG = {
+    ru: { join: n => `Игрок ${n} присоединился.`, leave: n => `Игрок ${n} вышел.`, win: n => `🎉 ${n} угадал слово!`, time: w => `⏰ Время вышло! Никто не угадал: ${w}`, stop: "Недостаточно игроков. Игра остановлена." },
+    ua: { join: n => `Гравець ${n} приєднався.`, leave: n => `Гравець ${n} вийшов.`, win: n => `🎉 ${n} вгадав слово!`, time: w => `⏰ Час вийшов! Ніхто не вгадав: ${w}`, stop: "Замало гравців. Гру зупинено." },
+    en: { join: n => `Player ${n} joined.`, leave: n => `Player ${n} left.`, win: n => `🎉 ${n} guessed the word!`, time: w => `⏰ Time's up! No one guessed: ${w}`, stop: "Not enough players. Game stopped." }
+};
+
 async function broadcastRoomsList() {
     try {
         const { data: rooms, error } = await supabase.from('game_rooms').select('*').order('created_at', { ascending: false });
@@ -138,7 +144,7 @@ async function broadcastRoomsList() {
         
        const list = (rooms || []).map(r => ({
     ...r,
-    region: roomRegions[r.room_id] || 'ru',
+    region: roomRegions[r.room_id] || 'ua',
     currentCount: roomPlayers[r.room_id] ? roomPlayers[r.room_id].length : 0
 }));
         
@@ -172,7 +178,7 @@ io.on('connection', (socket) => {
             roomPlayers[roomId] = [];
             roomScores[roomId] = {};
             roomChats[roomId] = []; 
-            roomRegions[roomId] = region || 'ru';
+            roomRegions[roomId] = region || 'ua';
             
             const { error } = await supabase.from('game_rooms').insert([{ 
                  room_id: roomId, mode: mode, max_players: max, status: 'waiting', creator_nick: nickname, region: region 
@@ -209,7 +215,8 @@ io.on('connection', (socket) => {
 
             socket.emit('chatHistory', roomChats[roomId]);
 
-            const joinMsg = { text: `Игрок ${nickname} присоединился.`, type: 'system-join' };
+            const reg = room.region || 'ua';
+            const joinMsg = { text: SYS_MSG[reg].join(nickname), type: 'system-join' };
             roomChats[roomId].push(joinMsg);
             io.to(roomId).emit('chatMessage', joinMsg);
             
@@ -272,7 +279,8 @@ io.on('connection', (socket) => {
             const { data: r } = await supabase.from('game_rooms').select('setter_nick').eq('room_id', socket.roomId).single();
             await supabase.from('game_rooms').update({ status: 'ended' }).eq('room_id', socket.roomId);
             
-            const infoMsg = { text: `⏰ Время вышло! Никто не угадал: ${word}`, type: 'system-info' };
+            const reg = roomRegions[socket.roomId] || 'ua';
+            const infoMsg = { text: SYS_MSG[reg].time(word), type: 'system-info' };
             roomChats[socket.roomId].push(infoMsg);
             io.to(socket.roomId).emit('chatMessage', infoMsg);
             
@@ -308,7 +316,8 @@ socket.on('chatMessage', async (data) => {
             broadcastRoomUpdate(socket.roomId, room);
             stopTimer(socket.roomId);
             
-            const winMsg = { text: `🎉 ${socket.nickname} угадал слово!`, type: 'system-win' };
+            const reg = room.region || 'ua';
+            const winMsg = { text: SYS_MSG[reg].win(socket.nickname), type: 'system-win' };
             roomChats[socket.roomId].push(winMsg);
             io.to(socket.roomId).emit('chatMessage', winMsg);
             
@@ -330,7 +339,8 @@ socket.on('chatMessage', async (data) => {
         if (roomId && roomPlayers[roomId]) {
             roomPlayers[roomId] = roomPlayers[roomId].filter(p => p.id !== socket.id);
             
-            const leaveMsg = { text: `Игрок ${socket.nickname} вышел.`, type: 'system-join' };
+            const reg = roomRegions[roomId] || 'ua';
+            const leaveMsg = { text: SYS_MSG[reg].leave(socket.nickname), type: 'system-join' };
             if (roomChats[roomId]) roomChats[roomId].push(leaveMsg);
             io.to(roomId).emit('chatMessage', leaveMsg);
             
@@ -352,7 +362,8 @@ socket.on('chatMessage', async (data) => {
                     io.to(roomId).emit('timer', ROUND_TIME); // Возвращаем визуально на 01:20
                     io.to(roomId).emit('crocHint', ''); // Прячем подсказку
                     
-                    const resetMsg = { text: `Недостаточно игроков. Игра остановлена.`, type: 'system-info' };
+                    const reg = roomRegions[roomId] || 'ua';
+                    const resetMsg = { text: SYS_MSG[reg].stop, type: 'system-info' };
                     roomChats[roomId].push(resetMsg);
                     io.to(roomId).emit('chatMessage', resetMsg);
                 }
@@ -457,8 +468,8 @@ function startCrocSelection(roomId) {
     const setter = availablePlayers[Math.floor(Math.random() * availablePlayers.length)];
     roomLastSetter[roomId] = setter.nick; 
     
-    const roomRegion = roomRegions[roomId] || 'ru';
-    const dict = CROC_WORDS[roomRegion] || CROC_WORDS['ru'];
+    const roomRegion = roomRegions[roomId] || 'ua';
+    const dict = CROC_WORDS[roomRegion] || CROC_WORDS['ua'];
     const shuffled = [...dict].sort(() => 0.5 - Math.random());
     
     supabase.from('game_rooms').update({ setter_nick: setter.nick, status: 'waiting' }).eq('room_id', roomId).then();

@@ -28,7 +28,7 @@
             </div>
 
             <div class="mode-select">
-                <button class="mode-btn wordle" onclick="openLobby('wordle')">Wordle 1x1</button>
+                <button class="mode-btn wordle" data-i18n="wordleBtn" onclick="openLobby('wordle')">Wordle 1x1</button>
                 <button class="mode-btn croc" data-i18n="crocBtn" onclick="openLobby('croc')">Крокодил</button>
             </div>
         </div>
@@ -65,11 +65,11 @@
                     <div id="grid-zone"><div id="grid"></div></div>
                     
                     <div id="setup-zone" class="hidden input-group">
-                        <input type="text" id="secret-word" placeholder="Загадай слово (2-10)">
+                        <input type="text" id="secret-word" data-i18n-placeholder="secretWord" placeholder="Загадай слово (2-10)">
                         <button onclick="sendSecret()">Загадать</button>
                     </div>
                     <div id="input-wrapper" class="hidden input-group">
-                        <input type="text" id="guess-input" placeholder="Твой ответ">
+                        <input type="text" id="guess-input" data-i18n-placeholder="yourAnswer" placeholder="Твой ответ">
                         <button onclick="sendGuess()">OK</button>
                     </div>
                 </div>
