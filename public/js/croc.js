@@ -122,7 +122,7 @@ socket.on('crocSelection', ({ setter, options }) => {
         const picker = document.getElementById('word-picker');
         picker.classList.remove('hidden');
         document.getElementById('word-options').innerHTML = options.map(w => `<button class="word-btn" onclick="chooseWord('${w}')">${w}</button>`).join('');
-        document.getElementById('status-msg').innerText = "Выбирай слово!";
+        document.getElementById('status-msg').innerText = `${setter} ${i18n[currentRegion].choosing}`;
         
         chatInput.disabled = true;
         chatInput.placeholder = "Художник не может писать...";

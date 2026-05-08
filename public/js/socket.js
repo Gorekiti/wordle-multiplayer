@@ -8,32 +8,55 @@ let currentRegion = localStorage.getItem('game-region') || 'ru'; // ДОБАВЛ
 let isSetter = false;
 let isGuesser = false; 
 
-// === СЛОВАРЬ ПЕРЕВОДОВ ИНТЕРФЕЙСА ===
+// === ПОЛНЫЙ СЛОВАРЬ ПЕРЕВОДОВ ИНТЕРФЕЙСА И ИГР ===
 const i18n = {
     ru: {
+        // UI Лобби и Кнопки
         nickPlaceholder: "Введите ваш ник...", crocBtn: "Крокодил", lobbyTitle: "Лобби", createBtn: "+ Создать",
-        homeBtn: "🏠 На главную", ratingTitle: "🏆 Рейтинг", waiting: "Ожидание...", chooseWord: "Выбери слово:",
+        homeBtn: "🏠 На главную", ratingTitle: "🏆 Рейтинг комнаты", waiting: "Ожидание...", chooseWord: "Выбери слово:",
         drew: "Рисовал(а):", guessed: "Угадал(а):", nextRound: "След. раунд через:", eraser: "🧽 Ластик", clear: "🗑 Сброс",
         playersTitle: "👥 Игроки", chatTitle: "💬 Чат", chatPlaceholder: "Сообщение...", copyBtn: "🔗 Ссылка",
         emptyLobby: "Нет открытых комнат. Создай свою!", fullBtn: "Заполнена", joinBtn: "Войти",
         wordleBtn: "Wordle 1x1", secretWord: "Загадай слово (2-10)", yourAnswer: "Твой ответ",
-        errNick: "Введите ник!", waitPlayers: "Ожидание игроков..."
+        errNick: "Введите ник!", waitPlayers: "Ожидание игроков...",
+        
+        // Логика игр (Крокодил и Wordle)
+        newRound: "Начался новый раунд!", yourTurn: "Твой ход!", oppGuesses: "Соперник угадывает...",
+        guessFrom: "Угадывай слово от", setFor: "Загадай слово для", wordIs: "Слово:",
+        wordLenErr: "Слово должно быть от 2 до 10 букв!", needLetters: "Нужно букв:",
+        choosing: "выбирает слово...", drawCmd: "Рисуй:", drawingNow: "рисует", hintMsg: "Подсказка:"
     },
     ua: {
+        // UI Лобби и Кнопки
         nickPlaceholder: "Введіть ваш нік...", crocBtn: "Крокодил", lobbyTitle: "Лобі", createBtn: "+ Створити",
-        homeBtn: "🏠 На головну", ratingTitle: "🏆 Рейтинг", waiting: "Очікування...", chooseWord: "Обери слово:",
+        homeBtn: "🏠 На головну", ratingTitle: "🏆 Рейтинг кімнати", waiting: "Очікування...", chooseWord: "Обери слово:",
         drew: "Малював(ла):", guessed: "Вгадав(ла):", nextRound: "Наст. раунд через:", eraser: "🧽 Гумка", clear: "🗑 Скинути",
         playersTitle: "👥 Гравці", chatTitle: "💬 Чат", chatPlaceholder: "Повідомлення...", copyBtn: "🔗 Лінк",
-        emptyLobby: "Немає відкритих кімнат. Створи свою!", fullBtn: "Заповнена", joinBtn: "Увійти", wordleBtn: "Wordle 1x1", secretWord: "Загадай слово (2-10)", yourAnswer: "Твоя відповідь",
-        errNick: "Введіть нік!", waitPlayers: "Очікування гравців..."
+        emptyLobby: "Немає відкритих кімнат. Створи свою!", fullBtn: "Заповнена", joinBtn: "Увійти",
+        wordleBtn: "Wordle 1x1", secretWord: "Загадай слово (2-10)", yourAnswer: "Твоя відповідь",
+        errNick: "Введіть нік!", waitPlayers: "Очікування гравців...",
+        
+        // Логика игр (Крокодил и Wordle)
+        newRound: "Почався новий раунд!", yourTurn: "Твій хід!", oppGuesses: "Суперник вгадує...",
+        guessFrom: "Вгадуй слово від", setFor: "Загадай слово для", wordIs: "Слово:",
+        wordLenErr: "Слово має бути від 2 до 10 літер!", needLetters: "Потрібно літер:",
+        choosing: "обирає слово...", drawCmd: "Малюй:", drawingNow: "малює", hintMsg: "Підказка:"
     },
     en: {
+        // UI Лобби и Кнопки
         nickPlaceholder: "Enter nickname...", crocBtn: "Charades", lobbyTitle: "Lobby", createBtn: "+ Create",
-        homeBtn: "🏠 Home", ratingTitle: "🏆 Ranking", waiting: "Waiting...", chooseWord: "Choose a word:",
+        homeBtn: "🏠 Home", ratingTitle: "🏆 Room Rating", waiting: "Waiting...", chooseWord: "Choose a word:",
         drew: "Drew:", guessed: "Guessed:", nextRound: "Next round in:", eraser: "🧽 Eraser", clear: "🗑 Clear",
         playersTitle: "👥 Players", chatTitle: "💬 Chat", chatPlaceholder: "Message...", copyBtn: "🔗 Link",
-        emptyLobby: "No rooms. Create one!", fullBtn: "Full", joinBtn: "Join", wordleBtn: "Wordle 1v1", secretWord: "Set a word (2-10)", yourAnswer: "Your guess",
-        errNick: "Enter nickname!", waitPlayers: "Waiting for players..."
+        emptyLobby: "No rooms. Create one!", fullBtn: "Full", joinBtn: "Join",
+        wordleBtn: "Wordle 1v1", secretWord: "Set a word (2-10)", yourAnswer: "Your guess",
+        errNick: "Enter nickname!", waitPlayers: "Waiting for players...",
+        
+        // Логика игр (Крокодил и Wordle)
+        newRound: "New round started!", yourTurn: "Your turn!", oppGuesses: "Opponent guessing...",
+        guessFrom: "Guess word from", setFor: "Set a word for", wordIs: "Word:",
+        wordLenErr: "Word must be 2-10 letters!", needLetters: "Letters needed:",
+        choosing: "is choosing a word...", drawCmd: "Draw:", drawingNow: "is drawing", hintMsg: "Hint:"
     }
 };
 
@@ -76,7 +99,7 @@ if (roomId) {
 function joinFromUrl() {
     myNick = document.getElementById('nick-input').value.trim();
     const selectedColor = document.getElementById('nick-color')?.value || '#538d4e'; 
-    if (!myNick) return showNotify("Введите ник!", "error");
+    if (!myNick) return showNotify(i18n[currentRegion].errNick, "error");
     
     localStorage.setItem('wordle-nick', myNick);
     localStorage.setItem('wordle-color', selectedColor);

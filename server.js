@@ -426,7 +426,7 @@ function startTimer(roomId, onTimeout) {
                 return revealed.includes(index) ? char : '_';
             }).join(' ');
 
-            io.to(roomId).emit('crocHint', `Подсказка: ${hintStr}`);
+            io.to(roomId).emit('crocHint', hintStr);
         }
 
         if (timeLeft <= 0) {

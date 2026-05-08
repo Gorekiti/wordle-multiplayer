@@ -14,9 +14,9 @@ socket.on('gameStart', ({ mode, setter, guesser }) => {
     isSetter = (myNick === setter);
     isGuesser = (myNick === guesser);
     
-    document.getElementById('status-msg').innerText = isGuesser ? `Угадывай слово от ${setter}` : `Загадай слово для ${guesser}`;
+    document.getElementById('status-msg').innerText = isGuesser ? `${i18n[currentRegion].guessFrom} ${setter}` : `${i18n[currentRegion].setFor} ${guesser}`;
     if (!isGuesser) document.getElementById('setup-zone').classList.remove('hidden');
-    showNotify("Начался новый раунд!", "success");
+    showNotify(i18n[currentRegion].newRound, "success");
     initPlaceholderGrid();
 });
 
@@ -27,10 +27,10 @@ socket.on('wordReady', ({ length, setter }) => {
     
     if (isGuesser) {
         document.getElementById('input-wrapper').classList.remove('hidden');
-        document.getElementById('status-msg').innerText = "Твой ход!";
+        document.getElementById('status-msg').innerText = i18n[currentRegion].yourTurn;
     } else {
         document.getElementById('input-wrapper').classList.add('hidden');
-        document.getElementById('status-msg').innerText = "Соперник угадывает...";
+        document.getElementById('status-msg').innerText = i18n[currentRegion].oppGuesses;
     }
 });
 
@@ -40,7 +40,7 @@ function sendSecret() {
         socket.emit('setWord', { roomId, word });
         document.getElementById('secret-word').value = "";
     } else {
-        showNotify("Слово должно быть от 2 до 10 букв!", "error");
+        showNotify(i18n[currentRegion].wordLenErr, "error");
     }
 }
 
@@ -50,7 +50,7 @@ function sendGuess() {
         socket.emit('makeGuess', { roomId, guess, nickname: myNick });
         document.getElementById('guess-input').value = "";
     } else {
-        showNotify(`Нужно ${currentWordLen} букв!`, "error");
+        showNotify(`${i18n[currentRegion].needLetters} ${currentWordLen}!`, "error");
     }
 }
 
@@ -102,7 +102,6 @@ function syncGame(session) {
 }
 
 socket.on('gameOver', ({ winner, word }) => {
-    // Если слово угадано, принудительно закрашиваем текущую строку зеленым
     const rows = document.querySelectorAll('.row');
     if (rows[currentAttempt]) {
         const tiles = rows[currentAttempt].querySelectorAll('.tile');
@@ -122,7 +121,7 @@ socket.on('gameOver', ({ winner, word }) => {
     // Ждем 1.5 секунды (чтобы игрок насладился победой), затем показываем итог
     setTimeout(() => {
         const res = document.getElementById('result-display');
-        res.innerText = winner ? `Победитель: ${winner}\nСлово: ${word}` : `Слово: ${word}`; 
+        res.innerText = `${i18n[currentRegion].wordIs} ${word}`;
         res.classList.remove('hidden');
     }, 1500);
 });
