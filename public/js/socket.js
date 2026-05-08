@@ -18,7 +18,7 @@ const i18n = {
         playersTitle: "👥 Игроки", chatTitle: "💬 Чат", chatPlaceholder: "Сообщение...", copyBtn: "🔗 Ссылка",
         emptyLobby: "Нет открытых комнат. Создай свою!", fullBtn: "Заполнена", joinBtn: "Войти",
         wordleBtn: "Wordle 1x1", secretWord: "Загадай слово (2-10)", yourAnswer: "Твой ответ",
-        errNick: "Введите ник!", waitPlayers: "Ожидание игроков...",
+        errNick: "Введите ник!", waitPlayers: "Ожидание игроков...", you: " (Вы)",
         
         // Логика игр (Крокодил и Wordle)
         newRound: "Начался новый раунд!", yourTurn: "Твой ход!", oppGuesses: "Соперник угадывает...",
@@ -34,7 +34,7 @@ const i18n = {
         playersTitle: "👥 Гравці", chatTitle: "💬 Чат", chatPlaceholder: "Повідомлення...", copyBtn: "🔗 Лінк",
         emptyLobby: "Немає відкритих кімнат. Створи свою!", fullBtn: "Заповнена", joinBtn: "Увійти",
         wordleBtn: "Wordle 1x1", secretWord: "Загадай слово (2-10)", yourAnswer: "Твоя відповідь",
-        errNick: "Введіть нік!", waitPlayers: "Очікування гравців...",
+        errNick: "Введіть нік!", waitPlayers: "Очікування гравців...", you: " (Ви)",
         
         // Логика игр (Крокодил и Wordle)
         newRound: "Почався новий раунд!", yourTurn: "Твій хід!", oppGuesses: "Суперник вгадує...",
@@ -50,7 +50,7 @@ const i18n = {
         playersTitle: "👥 Players", chatTitle: "💬 Chat", chatPlaceholder: "Message...", copyBtn: "🔗 Link",
         emptyLobby: "No rooms. Create one!", fullBtn: "Full", joinBtn: "Join",
         wordleBtn: "Wordle 1v1", secretWord: "Set a word (2-10)", yourAnswer: "Your guess",
-        errNick: "Enter nickname!", waitPlayers: "Waiting for players...",
+        errNick: "Enter nickname!", waitPlayers: "Waiting for players...", you: " (You)",
         
         // Логика игр (Крокодил и Wordle)
         newRound: "New round started!", yourTurn: "Your turn!", oppGuesses: "Opponent guessing...",
@@ -176,7 +176,7 @@ socket.on('roomUpdate', ({ session, leaders, activePlayers, maxPlayers }) => {
     else document.body.classList.remove('wordle-mode');
 
     document.getElementById('leaderboard').innerHTML = leaders.map(p => `<li>${p.nickname}: <b>${p.score}</b></li>`).join('');
-    document.getElementById('player-list').innerHTML = activePlayers.map(name => `<li>${name}${name === myNick ? " (Вы)" : ""}</li>`).join('');
+    document.getElementById('player-list').innerHTML = activePlayers.map(name => `<li>${name}${name === myNick ? i18n[currentRegion].you : ""}</li>`).join('');
     document.getElementById('player-count-badge').innerText = `${activePlayers.length}/${maxPlayers}`;
 
     if (session.status === 'waiting') {
